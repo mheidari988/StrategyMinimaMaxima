@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32014.148
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StrategyMinimaMaxima", "StrategyMinimaMaxima\StrategyMinimaMaxima.csproj", "{1D15FEFA-32A6-4E65-98A2-14F0390EEBD5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1D15FEFA-32A6-4E65-98A2-14F0390EEBD5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D15FEFA-32A6-4E65-98A2-14F0390EEBD5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D15FEFA-32A6-4E65-98A2-14F0390EEBD5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1D15FEFA-32A6-4E65-98A2-14F0390EEBD5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {05DE6A0C-4504-4EA5-BFA7-204E0E44469D}
+	EndGlobalSection
+EndGlobal
