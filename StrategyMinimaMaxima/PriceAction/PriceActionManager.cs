@@ -8,10 +8,11 @@ namespace StrategyMinimaMaxima.PriceAction
 {
     public class PriceActionManager
     {
-        long _candleSeq = -1;
-
+        private PriceActionHelper _priceActionHelper;
+        long _candleSeq = 0;
         public PriceActionManager()
         {
+            _priceActionHelper = new PriceActionHelper();
             Candles = new List<Candle>();
             ValleyCandles = new List<Candle>();
             PeakCandles = new List<Candle>();
@@ -23,18 +24,38 @@ namespace StrategyMinimaMaxima.PriceAction
         
         public void AddCandle(Candle candle)
         {
-            candle.SeqNum = ++_candleSeq;
-            Candles.Add(candle);
-            processPeaksAndValleys();
-            processChainedElements();
-            processLegs();
-            processSwings();
+            if (ProcessLimit == 0)
+            {
+                candle.SeqNum = ++_candleSeq;
+                Candles.Add(candle);
+                processPeaksAndValleys();
+                processChainedElements();
+                processLegs();
+                processSwings();
+            }
+            else
+            {
+                if (_candleSeq < ProcessLimit)
+                {
+                    candle.SeqNum = _candleSeq++;
+                    Candles.Add(candle);
+                    processPeaksAndValleys();
+                    processChainedElements();
+                    processLegs();
+                    processSwings();
+                }
+            }
         }
 
         //----------------- Temporary log file for testing the results----------------------
         public void WriteLocalLog()
         {
             StringBuilder str = new StringBuilder();
+            str.AppendLine("--------- Candles ---------");
+            foreach (var item in Candles)
+            {
+                str.AppendLine($"SeqNo {item.SeqNum} -- Type: -- Values: Open:{item.OpenPrice} , Close:{item.ClosePrice} High:{item.HighPrice} Low:{item.LowPrice}");
+            }
             str.AppendLine("--------- Elements ---------");
             foreach (var item in Elements)
             {
@@ -59,10 +80,29 @@ namespace StrategyMinimaMaxima.PriceAction
             str.AppendLine("--------- Swings ---------");
             foreach (var item in Swings)
             {
-                str.AppendLine($"Index:{item.Key} = {item.Value.PatternType}");
+                str.AppendLine($"Index:{item.Key} = {item.Value.PatternType}" +
+                    $" -- ImpulseType: {_priceActionHelper.GetImpulseType(item.Value)}" +
+                    $" -- CorrectionType: {_priceActionHelper.GetCorrectionType(item.Value)}");
             }
             File.WriteAllText("_log.txt", str.ToString());
         }
+
+        public void WriteCustomLog()
+        {
+            var lastSwingCandles = GetLastSwingsCandles();
+            if (lastSwingCandles != null)
+            {
+                StringBuilder str = new StringBuilder();
+                str.AppendLine("--------- Last Swing Candles ---------");
+                foreach (var item in lastSwingCandles)
+                {
+                    str.AppendLine($"SeqNo {item.SeqNum} -- Type: -- Values: Open:{item.OpenPrice} , Close:{item.ClosePrice} High:{item.HighPrice} Low:{item.LowPrice}");
+                }
+                File.WriteAllText("_log2.txt", str.ToString());
+            }
+        }
+
+        #region Private Methods
 
         private void processPeaksAndValleys()
         {
@@ -182,7 +222,7 @@ namespace StrategyMinimaMaxima.PriceAction
 
             long _chainIndex = 0;
             ChainedElements.Clear();
-            
+
             ChainedElements.Add(_chainIndex++, Elements[0]);
 
             if (Elements.Count > 1)
@@ -228,9 +268,9 @@ namespace StrategyMinimaMaxima.PriceAction
 
         private void processLegs()
         {
-            if (ChainedElements==null)
+            if (ChainedElements == null)
                 throw new NullReferenceException("ChainedSwingElements cannot be null.");
-            
+
             Legs.Clear();
 
             long _legIndex = 0;
@@ -256,6 +296,26 @@ namespace StrategyMinimaMaxima.PriceAction
             }
         }
 
+        #endregion
+
+
+        //----------------- Public methods ----------------------
+
+        public List<Candle>? GetLastSwingsCandles()
+        {
+            if (Swings == null) return null;
+            if (Swings.Count < 1) return null;
+            var _lastSwing = Swings[Swings.Count - 1];
+            var _beginCandleSeqNum = _lastSwing.Leg1.BeginElement.Candle.SeqNum;
+            var _endCandleSeqNum = _lastSwing.Leg3.EndElement.Candle.SeqNum;
+            return Candles.FindAll(s => s.SeqNum >= _beginCandleSeqNum && s.SeqNum <= _endCandleSeqNum);
+        }
+
+        //----------------- Public Properties ----------------------
+
+        #region Public Properties
+
+        public long ProcessLimit { get; set; } = 0;
         public Dictionary<long,PriceActionElement> Elements { get; private set; }
 
         public Dictionary<long, PriceActionElement> ChainedElements { get; private set; }
@@ -267,5 +327,7 @@ namespace StrategyMinimaMaxima.PriceAction
         public List<Candle> Candles { get; private set; }
         public List<Candle> ValleyCandles { get; private set; }
         public List<Candle> PeakCandles { get; private set; }
+
+        #endregion
     }
 }

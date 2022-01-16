@@ -9,6 +9,16 @@ namespace StrategyMinimaMaxima.PriceAction
             Candle = _candle;
         }
 
+        public CandleMomentumType CandleMomentum
+        {
+            get
+            {
+                if (Candle.OpenPrice < Candle.ClosePrice)
+                    return CandleMomentumType.Bullish;
+                else
+                    return CandleMomentumType.Bearish;
+            }
+        }
         public MomentumType MomentumType { get; set; }
 
         public PeakValleyStatus PeakValleyStatus { get; set; }

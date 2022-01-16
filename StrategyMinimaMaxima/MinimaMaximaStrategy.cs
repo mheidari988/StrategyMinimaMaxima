@@ -10,10 +10,11 @@ namespace StrategyMinimaMaxima
     internal class MinimaMaximaStrategy : Strategy
     {
         private readonly CandleSeries _candleSeries;
-        private readonly PriceActionManager _minimaMaximaFinder = new PriceActionManager();
-        public MinimaMaximaStrategy(CandleSeries candleSeries)
+        private readonly PriceActionManager _priceActionManager = new PriceActionManager();
+        public MinimaMaximaStrategy(CandleSeries candleSeries, long processLimit = 0)
         {
             _candleSeries = candleSeries;
+            _priceActionManager.ProcessLimit = processLimit;
         }
 
         protected override void OnStarted()
@@ -27,9 +28,10 @@ namespace StrategyMinimaMaxima
         {
             if (candle.State != CandleStates.Finished) return;
 
-            _minimaMaximaFinder.AddCandle(candle);
+            _priceActionManager.AddCandle(candle);
             {
-                _minimaMaximaFinder.WriteLocalLog();
+                _priceActionManager.WriteLocalLog();
+                _priceActionManager.WriteCustomLog();
             }
 
             //if (candle.OpenPrice < candle.ClosePrice && Position >= 0)

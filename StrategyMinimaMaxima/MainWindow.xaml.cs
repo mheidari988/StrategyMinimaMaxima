@@ -105,7 +105,7 @@ namespace StrategyMinimaMaxima
             _connector.OrderRegisterFailed += OrderGrid.AddRegistrationFail;
 
             //.................initializing strategy...................
-            _strategy = new MinimaMaximaStrategy(_candleSeries)
+            _strategy = new MinimaMaximaStrategy(_candleSeries, long.Parse(txtProcessLimit.Text))
             {
                 Security = _security,
                 Connector = _connector,

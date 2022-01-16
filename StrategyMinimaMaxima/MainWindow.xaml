@@ -57,10 +57,11 @@
             </TabItem>
         </TabControl>
         <xaml:CandleSettingsEditor x:Name="CandleSettingsEditor" Grid.Row="0" Grid.Column="0"/>
-        <Button x:Name="Start" Content="Start" Click="Start_Click"  Grid.Row="0" Grid.Column="3"/>
+        <Button x:Name="Start" Content="Start" Click="Start_Click"  Grid.Row="0" Grid.Column="4" Margin="0,0,398,0"/>
 
         <DatePicker Grid.Row="0" Grid.Column="1" x:Name="DatePickerBegin"/>
         <DatePicker x:Name="DatePickerEnd" Grid.Row="0" Grid.Column="2"/>
+        <TextBox Grid.Column="3" Name="txtProcessLimit" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Center" Width="185"/>
 
 
     </Grid>

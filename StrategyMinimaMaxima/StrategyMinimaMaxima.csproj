@@ -8,6 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="PriceAction\V2\**" />
+    <EmbeddedResource Remove="PriceAction\V2\**" />
+    <None Remove="PriceAction\V2\**" />
+    <Page Remove="PriceAction\V2\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="StockSharp.Algo" Version="5.0.116" />
     <PackageReference Include="StockSharp.BusinessEntities" Version="5.0.111" />
     <PackageReference Include="StockSharp.Xaml" Version="5.0.117" />
@@ -15,7 +22,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="PriceAction\V2\" />
     <Folder Include="Trading\" />
   </ItemGroup>
 

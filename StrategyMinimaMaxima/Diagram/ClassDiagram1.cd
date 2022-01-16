@@ -1,66 +1,87 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ClassDiagram MajorVersion="1" MinorVersion="1">
-  <Class Name="StrategyMinimaMaxima.PriceAction.FibonacciCalculator" Collapsed="true">
-    <Position X="0.5" Y="0.5" Width="1.5" />
+  <Class Name="StrategyMinimaMaxima.PriceAction.FibonacciCalculator">
+    <Position X="0.5" Y="0.5" Width="1.75" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAQAAAAAAAAAAAAAABBAAAAAEAAAAAAIAAAE=</HashCode>
       <FileName>PriceAction\FibonacciCalculator.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="StrategyMinimaMaxima.PriceAction.PriceActionSwing">
-    <Position X="7.25" Y="0.5" Width="2" />
+    <Position X="9.25" Y="0.5" Width="2" />
     <TypeIdentifier>
       <HashCode>YAEAAAAAAAIBAAAAIAAAAAAABAAgAAIAAAAAAAAABAA=</HashCode>
       <FileName>PriceAction\PriceActionSwing.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="StrategyMinimaMaxima.PriceAction.PriceActionManager">
-    <Position X="9.75" Y="0.5" Width="2.75" />
+    <Position X="11.5" Y="0.5" Width="2.75" />
     <TypeIdentifier>
-      <HashCode>IEAIAAAAYAIAAAAAgAAQAAIAAAAAAAAAQAAAICAAAIA=</HashCode>
+      <HashCode>IEAIAAAAYAIAAAAAgAAQAAIAAAAABAAAQAAAICAACIA=</HashCode>
       <FileName>PriceAction\PriceActionManager.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="StrategyMinimaMaxima.PriceAction.PriceActionElement">
-    <Position X="3.25" Y="0.5" Width="2" />
+    <Position X="5.25" Y="0.5" Width="2" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAEAAAEAAAAAEAAAAAABAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAAAAAAAAAAEAAAEAAAAAECAAAAABAAAAAAAAAAAA=</HashCode>
       <FileName>PriceAction\PriceActionElement.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="StrategyMinimaMaxima.PriceAction.PriceActionLeg">
-    <Position X="5.5" Y="0.5" Width="1.5" />
+    <Position X="7.5" Y="0.5" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAEAAAAAAAAAAAAAAAAAAAQAAABAAAAAAAAAAAA=</HashCode>
       <FileName>PriceAction\PriceActionLeg.cs</FileName>
     </TypeIdentifier>
   </Class>
+  <Class Name="StrategyMinimaMaxima.PriceAction.PriceActionHelper">
+    <Position X="14.5" Y="0.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAACAAAAA=</HashCode>
+      <FileName>PriceAction\PriceActionHelper.cs</FileName>
+    </TypeIdentifier>
+  </Class>
   <Enum Name="StrategyMinimaMaxima.PriceAction.MomentumType">
-    <Position X="0.5" Y="1.25" Width="1.5" />
+    <Position X="2.5" Y="3.75" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AABAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAA=</HashCode>
       <FileName>PriceAction\MomentumType.cs</FileName>
     </TypeIdentifier>
   </Enum>
   <Enum Name="StrategyMinimaMaxima.PriceAction.PatternType">
-    <Position X="0.5" Y="2.75" Width="1.5" />
+    <Position X="0.5" Y="3.25" Width="1.5" />
     <TypeIdentifier>
       <HashCode>QAABAAAAAAAAAAEEAAAAAAAAAAAAABBAAAAAAAQQABA=</HashCode>
       <FileName>PriceAction\PatternType.cs</FileName>
     </TypeIdentifier>
   </Enum>
   <Enum Name="StrategyMinimaMaxima.PriceAction.PeakValleyType">
-    <Position X="0.5" Y="5.5" Width="1.5" />
+    <Position X="0.5" Y="6" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAQAAAAAAEAAAA=</HashCode>
       <FileName>PriceAction\PeakValleyType.cs</FileName>
     </TypeIdentifier>
   </Enum>
   <Enum Name="StrategyMinimaMaxima.PriceAction.PeakValleyStatus">
-    <Position X="0.5" Y="7.25" Width="1.5" />
+    <Position X="0.5" Y="7.5" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAIBAAAAAAAAAAAABAAgAAAAAAAAAAEAAAA=</HashCode>
       <FileName>PriceAction\PeakValleyStatus.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="StrategyMinimaMaxima.PriceAction.ImpulseType">
+    <Position X="2.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAACAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAABA=</HashCode>
+      <FileName>PriceAction\ImpulseType.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="StrategyMinimaMaxima.PriceAction.CorrectionType">
+    <Position X="2.5" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAQAAhA=</HashCode>
+      <FileName>PriceAction\CorrectionType.cs</FileName>
     </TypeIdentifier>
   </Enum>
   <Font Name="Segoe UI" Size="9" />
