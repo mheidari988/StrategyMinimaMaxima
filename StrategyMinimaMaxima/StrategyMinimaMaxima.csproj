@@ -14,4 +14,9 @@
     <PackageReference Include="StockSharp.Xaml.Charting" Version="5.0.116" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="PriceAction\V2\" />
+    <Folder Include="Trading\" />
+  </ItemGroup>
+
 </Project>

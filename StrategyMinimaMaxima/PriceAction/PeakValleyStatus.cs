@@ -1,6 +1,6 @@
 ﻿namespace StrategyMinimaMaxima.PriceAction
 {
-    public enum SwingMode
+    public enum PeakValleyStatus
     {
         None = -1,
         LowerLow = 0,

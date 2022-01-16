@@ -10,7 +10,7 @@ namespace StrategyMinimaMaxima
     internal class MinimaMaximaStrategy : Strategy
     {
         private readonly CandleSeries _candleSeries;
-        private readonly MinimaMaximaFinder _minimaMaximaFinder = new MinimaMaximaFinder();
+        private readonly PriceActionManager _minimaMaximaFinder = new PriceActionManager();
         public MinimaMaximaStrategy(CandleSeries candleSeries)
         {
             _candleSeries = candleSeries;
@@ -29,9 +29,7 @@ namespace StrategyMinimaMaxima
 
             _minimaMaximaFinder.AddCandle(candle);
             {
-                //_minimaMaximaFinder.WriteLog();
-                _minimaMaximaFinder.WriteDicLog();
-                _minimaMaximaFinder.WriteLog();
+                _minimaMaximaFinder.WriteLocalLog();
             }
 
             //if (candle.OpenPrice < candle.ClosePrice && Position >= 0)
