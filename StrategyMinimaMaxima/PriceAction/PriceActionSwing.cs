@@ -16,7 +16,7 @@ namespace StrategyMinimaMaxima.PriceAction
             Leg2 = leg2;
             Leg3 = leg3;
             findLowersAndHighers();
-            if (!findBullishSwingType())
+            if (!findSwingType())
                 PatternType = PatternType.Unknown;
         }
 
@@ -44,7 +44,7 @@ namespace StrategyMinimaMaxima.PriceAction
                 throw new ArgumentOutOfRangeException("Legs' MomentumMode is not acceptable.");
         }
 
-        private bool findBullishSwingType()
+        private bool findSwingType()
         {
             bool tempResult = true;
 
@@ -52,56 +52,56 @@ namespace StrategyMinimaMaxima.PriceAction
                 throw new ArgumentNullException("Neither of [ LL, HL, LH, HH ] acceptable as Null.");
 
             if (Leg1.MomentumType == MomentumType.Bullish
-                && Leg3.BeginElement.Candle.LowPrice > Leg1.BeginElement.Candle.LowPrice
-                && Leg3.EndElement.Candle.HighPrice > Leg1.EndElement.Candle.HighPrice)
+                && Leg3.BeginElement.Candle.LowPrice >= Leg1.BeginElement.Candle.LowPrice
+                && Leg3.EndElement.Candle.HighPrice >= Leg1.EndElement.Candle.HighPrice)
             {
                 PatternType = PatternType.BullishICI;
             }
             else if (Leg1.MomentumType == MomentumType.Bearish
-                && Leg3.BeginElement.Candle.HighPrice > Leg1.BeginElement.Candle.HighPrice
-                && Leg3.EndElement.Candle.LowPrice > Leg1.EndElement.Candle.LowPrice)
+                && Leg3.BeginElement.Candle.HighPrice >= Leg1.BeginElement.Candle.HighPrice
+                && Leg3.EndElement.Candle.LowPrice >= Leg1.EndElement.Candle.LowPrice)
             {
                 PatternType = PatternType.BullishCIC;
             }
             else if (Leg1.MomentumType == MomentumType.Bullish
-                && Leg3.BeginElement.Candle.LowPrice > Leg1.BeginElement.Candle.LowPrice
-                && Leg3.EndElement.Candle.HighPrice < Leg1.EndElement.Candle.HighPrice)
+                && Leg3.BeginElement.Candle.LowPrice >= Leg1.BeginElement.Candle.LowPrice
+                && Leg3.EndElement.Candle.HighPrice <= Leg1.EndElement.Candle.HighPrice)
             {
                 PatternType = PatternType.BullishICC;
             }
             else if (Leg1.MomentumType == MomentumType.Bullish
-                && Leg3.BeginElement.Candle.LowPrice < Leg1.BeginElement.Candle.LowPrice
-                && Leg3.EndElement.Candle.HighPrice > Leg1.EndElement.Candle.HighPrice)
+                && Leg3.BeginElement.Candle.LowPrice <= Leg1.BeginElement.Candle.LowPrice
+                && Leg3.EndElement.Candle.HighPrice >= Leg1.EndElement.Candle.HighPrice)
             {
                 PatternType = PatternType.BullishCII;
             }
             else if (Leg1.MomentumType == MomentumType.Bearish
-                && Leg3.BeginElement.Candle.HighPrice < Leg1.BeginElement.Candle.HighPrice
-                && Leg3.EndElement.Candle.LowPrice < Leg1.EndElement.Candle.LowPrice)
+                && Leg3.BeginElement.Candle.HighPrice <= Leg1.BeginElement.Candle.HighPrice
+                && Leg3.EndElement.Candle.LowPrice <= Leg1.EndElement.Candle.LowPrice)
             {
                 PatternType = PatternType.BearishICI;
             }
             else if (Leg1.MomentumType == MomentumType.Bullish
-                && Leg3.BeginElement.Candle.LowPrice < Leg1.BeginElement.Candle.LowPrice
-                && Leg3.EndElement.Candle.HighPrice < Leg1.EndElement.Candle.HighPrice)
+                && Leg3.BeginElement.Candle.LowPrice <= Leg1.BeginElement.Candle.LowPrice
+                && Leg3.EndElement.Candle.HighPrice <= Leg1.EndElement.Candle.HighPrice)
             {
                 PatternType = PatternType.BearishCIC;
             }
             else if (Leg1.MomentumType == MomentumType.Bearish
-                && Leg3.BeginElement.Candle.HighPrice < Leg1.BeginElement.Candle.HighPrice
-                && Leg3.EndElement.Candle.LowPrice > Leg1.EndElement.Candle.LowPrice)
+                && Leg3.BeginElement.Candle.HighPrice <= Leg1.BeginElement.Candle.HighPrice
+                && Leg3.EndElement.Candle.LowPrice >= Leg1.EndElement.Candle.LowPrice)
             {
                 PatternType = PatternType.BearishICC;
             }
             else if (Leg1.MomentumType == MomentumType.Bearish
-                && Leg3.BeginElement.Candle.HighPrice > Leg1.BeginElement.Candle.HighPrice
-                && Leg3.EndElement.Candle.LowPrice < Leg1.EndElement.Candle.LowPrice)
+                && Leg3.BeginElement.Candle.HighPrice >= Leg1.BeginElement.Candle.HighPrice
+                && Leg3.EndElement.Candle.LowPrice <= Leg1.EndElement.Candle.LowPrice)
             {
                 PatternType = PatternType.BearishCII;
             }
             else
             {
-                tempResult = false;
+                throw new Exception("Pattern Type not founded.");
             }
             return tempResult;
         }

@@ -26,7 +26,7 @@ namespace StrategyMinimaMaxima.PriceAction
                         return ImpulseType.Fakeout;
                     break;
                 case PatternType.BullishCIC:
-                    if (swing.Leg3.BeginElement.Candle.ClosePrice > swing.Leg1.EndElement.Candle.HighPrice)
+                    if (swing.Leg3.BeginElement.Candle.ClosePrice > swing.Leg1.BeginElement.Candle.HighPrice)
                         return ImpulseType.Breakout;
                     else
                         return ImpulseType.Fakeout;

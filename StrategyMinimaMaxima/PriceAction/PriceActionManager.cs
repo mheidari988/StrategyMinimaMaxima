@@ -9,7 +9,7 @@ namespace StrategyMinimaMaxima.PriceAction
     public class PriceActionManager
     {
         private PriceActionHelper _priceActionHelper;
-        long _candleSeq = 0;
+        long _candleSeq = -1;
         public PriceActionManager()
         {
             _priceActionHelper = new PriceActionHelper();
@@ -21,7 +21,7 @@ namespace StrategyMinimaMaxima.PriceAction
             Legs = new Dictionary<long, PriceActionLeg>();
             Swings = new Dictionary<long, PriceActionSwing>();
         }
-        
+
         public void AddCandle(Candle candle)
         {
             if (ProcessLimit == 0)
@@ -35,9 +35,9 @@ namespace StrategyMinimaMaxima.PriceAction
             }
             else
             {
-                if (_candleSeq < ProcessLimit)
+                if (_candleSeq < ProcessLimit - 1)
                 {
-                    candle.SeqNum = _candleSeq++;
+                    candle.SeqNum = ++_candleSeq;
                     Candles.Add(candle);
                     processPeaksAndValleys();
                     processChainedElements();
@@ -48,13 +48,16 @@ namespace StrategyMinimaMaxima.PriceAction
         }
 
         //----------------- Temporary log file for testing the results----------------------
-        public void WriteLocalLog()
+        public void WriteLocalLog(string logName)
         {
             StringBuilder str = new StringBuilder();
+            str.AppendLine("--------- General Information ---------");
+            str.AppendLine($"--- Candles Count = {Candles.Count} ** ElementsCount = {Elements.Count} ** " +
+                $"Chained Elements Count = {ChainedElements.Count} ** Legs Count = {Legs.Count} ** Swings Count = {Swings.Count} ---");
             str.AppendLine("--------- Candles ---------");
             foreach (var item in Candles)
             {
-                str.AppendLine($"SeqNo {item.SeqNum} -- Type: -- Values: Open:{item.OpenPrice} , Close:{item.ClosePrice} High:{item.HighPrice} Low:{item.LowPrice}");
+                str.AppendLine($"SeqNo {item.SeqNum} -- OpenTime:{item.OpenTime} -- Values: Open:{item.OpenPrice} , Close:{item.ClosePrice} High:{item.HighPrice} Low:{item.LowPrice}");
             }
             str.AppendLine("--------- Elements ---------");
             foreach (var item in Elements)
@@ -84,7 +87,7 @@ namespace StrategyMinimaMaxima.PriceAction
                     $" -- ImpulseType: {_priceActionHelper.GetImpulseType(item.Value)}" +
                     $" -- CorrectionType: {_priceActionHelper.GetCorrectionType(item.Value)}");
             }
-            File.WriteAllText("_log.txt", str.ToString());
+            File.WriteAllText(logName, str.ToString());
         }
 
         public void WriteCustomLog()

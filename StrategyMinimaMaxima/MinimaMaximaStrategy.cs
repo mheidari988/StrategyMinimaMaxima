@@ -30,8 +30,7 @@ namespace StrategyMinimaMaxima
 
             _priceActionManager.AddCandle(candle);
             {
-                _priceActionManager.WriteLocalLog();
-                _priceActionManager.WriteCustomLog();
+                _priceActionManager.WriteLocalLog("_MinimaMaximaStrategy_Log.txt");
             }
 
             //if (candle.OpenPrice < candle.ClosePrice && Position >= 0)

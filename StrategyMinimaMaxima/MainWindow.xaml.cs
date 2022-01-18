@@ -25,7 +25,8 @@ namespace StrategyMinimaMaxima
         private HistoryEmulationConnector _connector;
         private ChartCandleElement _candleElement;
         private ChartTradeElement _tradesElem;
-        private CandleSeries _candleSeries;
+        private CandleSeries _1hCandleSeries;
+        private CandleSeries _15mCandleSeries;
         private Security _security;
         private Portfolio _portfolio;
         private readonly LogManager _logManager;
@@ -43,8 +44,8 @@ namespace StrategyMinimaMaxima
             _logManager.Listeners.Add(new FileLogListener("log.txt"));
             _logManager.Listeners.Add(new GuiLogListener(Monitor));
 
-            DatePickerBegin.SelectedDate = new DateTime(2021, 11, 21);
-            DatePickerEnd.SelectedDate = new DateTime(2021, 11, 23);
+            DatePickerBegin.SelectedDate = new DateTime(2021, 11, 18);
+            DatePickerEnd.SelectedDate = new DateTime(2021, 11, 19);
 
             CandleSettingsEditor.Settings = new CandleSeries
             {
@@ -87,11 +88,18 @@ namespace StrategyMinimaMaxima
             //.................add connector to the log manager...................
             _logManager.Sources.Add(_connector);
 
+            _15mCandleSeries = new CandleSeries(typeof(TimeFrameCandle), _security, TimeSpan.FromMinutes(15))
+            {
+                BuildCandlesMode = MarketDataBuildModes.Load
+            };
+
             //.................specify candle series information...................
-            _candleSeries = new CandleSeries(CandleSettingsEditor.Settings.CandleType, _security, CandleSettingsEditor.Settings.Arg)
+            _1hCandleSeries = new CandleSeries(typeof(TimeFrameCandle), _security, TimeSpan.FromMinutes(60))
             {
                 BuildCandlesMode = MarketDataBuildModes.LoadAndBuild
             };
+
+
 
             //.................initialize chart...................
             InitChart();
@@ -105,7 +113,14 @@ namespace StrategyMinimaMaxima
             _connector.OrderRegisterFailed += OrderGrid.AddRegistrationFail;
 
             //.................initializing strategy...................
-            _strategy = new MinimaMaximaStrategy(_candleSeries, long.Parse(txtProcessLimit.Text))
+            //_strategy = new MinimaMaximaStrategy(_1hCandleSeries, long.Parse(txtProcessLimit.Text))
+            //{
+            //    Security = _security,
+            //    Connector = _connector,
+            //    Portfolio = _portfolio,
+            //};
+
+            _strategy = new FirstStrategy(_1hCandleSeries, _15mCandleSeries, long.Parse(txtProcessLimit.Text))
             {
                 Security = _security,
                 Connector = _connector,
@@ -128,7 +143,7 @@ namespace StrategyMinimaMaxima
 
             _connector.SendInMessage(new CommissionRuleMessage
             {
-                Rule = new CommissionPerTradeRule { Value = 0.01m }
+                Rule = new CommissionPerTradeRule { Value = 0.07m }
             });
         }
         private void InitChart()
