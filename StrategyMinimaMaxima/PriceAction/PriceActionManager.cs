@@ -178,7 +178,7 @@ namespace StrategyMinimaMaxima.PriceAction
 
                     ValleyCandles.Add(Candles[i]);
                 }
-                else if (Candles[i - 1].HighPrice < Candles[i].HighPrice && Candles[i].HighPrice > Candles[i + 1].HighPrice)
+                if (Candles[i - 1].HighPrice < Candles[i].HighPrice && Candles[i].HighPrice > Candles[i + 1].HighPrice)
                 {
                     PriceActionElement _max = new PriceActionElement(Candles[i])
                     {
