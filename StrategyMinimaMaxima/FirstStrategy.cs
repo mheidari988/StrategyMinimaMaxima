@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using System.IO;
 
 namespace StrategyMinimaMaxima
 {
@@ -16,16 +17,16 @@ namespace StrategyMinimaMaxima
     {
         private readonly CandleSeries _h1CandleSeries;
         private readonly CandleSeries _15mCandleSeries;
-        private readonly PriceActionManager _1h_priceActionManager = new PriceActionManager();
-        private readonly PriceActionManager _15m_priceActionManager = new PriceActionManager();
-        private Dictionary<long, PriceActionSwing> _15Swings = new Dictionary<long, PriceActionSwing>();
+        private readonly PriceActionManager manager1h = new PriceActionManager();
+        private readonly PriceActionManager manager15m = new PriceActionManager();
+        private PriceActionProcessor processor = new PriceActionProcessor();
 
         public FirstStrategy(CandleSeries _h1CandleSeries, CandleSeries _15mCandleSeries, long processLimit = 0)
         {
             this._h1CandleSeries = _h1CandleSeries;
             this._15mCandleSeries = _15mCandleSeries;
-            _1h_priceActionManager.ProcessLimit = processLimit;
-            _15m_priceActionManager.ProcessLimit = processLimit * 4;
+            manager1h.ProcessLimit = processLimit;
+            manager15m.ProcessLimit = processLimit * 4;
         }
 
         protected override void OnStarted()
@@ -38,35 +39,81 @@ namespace StrategyMinimaMaxima
 
         private void CandleManager_Processing(CandleSeries candleSeries, Candle candle)
         {
-            
             if (((TimeFrameCandle)candle).TimeFrame == TimeSpan.FromMinutes(15))
             {
                 if (candle.State != CandleStates.Finished) return;
 
-                _15m_priceActionManager.AddCandle(candle);
-                _15m_priceActionManager.WriteLocalLog("_FirstStrategy_15m_Log.txt");
+                manager15m.AddCandle(candle);
+                manager15m.WriteLocalLog("_FirstStrategy_15m_Log.txt");
+                processor.ChildManager = manager15m;
             }
             else if (((TimeFrameCandle)candle).TimeFrame == TimeSpan.FromMinutes(60))
             {
                 if (candle.State != CandleStates.Finished) return;
 
-                _1h_priceActionManager.AddCandle(candle);
-                _1h_priceActionManager.WriteLocalLog("_FirstStrategy_1h_Log.txt");
+                manager1h.AddCandle(candle);
+                manager1h.WriteLocalLog("_FirstStrategy_1h_Log.txt");
+                processor.ParrentManager = manager1h;
             }
-            
 
-            
 
-            //if (candle.OpenPrice < candle.ClosePrice && Position >= 0)
-            //{
-            //    RegisterOrder(this.SellAtMarket(Volume + Math.Abs(Position)));
-            //}
-
-            //else
-            //if (candle.OpenPrice > candle.ClosePrice && Position <= 0)
-            //{
-            //    RegisterOrder(this.BuyAtMarket(Volume + Math.Abs(Position)));
-            //}
+            if (manager1h.Swings.Count > 0)
+            {
+                //WriteCandleList(processor.GetChildCandlesFrom(LegStatus.Leg3));
+                //WriteSwingDic(processor.GetChildSwingsOf(LegStatus.Leg1));
+                //WriteSwingList(processor._GetChildSwingsOf(LegStatus.Leg1));
+            }
         }
+
+        #region Log
+        public void WriteCandleList(List<Candle> cndl)
+        {
+            if (cndl != null)
+            {
+                StringBuilder str = new StringBuilder();
+                str.AppendLine("--------- Last Swing Candles ---------");
+                foreach (var item in cndl)
+                {
+                    str.AppendLine($"SeqNo {item.SeqNum} -- Type: -- Values: Open:{item.OpenPrice} ," +
+                        $" Close:{item.ClosePrice} High:{item.HighPrice} Low:{item.LowPrice}");
+                }
+                File.WriteAllText("_GetChildCandlesFrom.txt", str.ToString());
+            }
+        }
+        public void WriteSwingDic(Dictionary<long,PriceActionSwing> swings)
+        {
+            if (swings != null)
+            {
+                StringBuilder str = new StringBuilder();
+                str.AppendLine("--------- Last Swing Candles ---------");
+                foreach (var item in swings)
+                {
+                    str.AppendLine($"Index: {item.Key}" +
+                        $" -- Impulse: {PriceActionHelper.GetImpulseType(item.Value)} " +
+                        $" -- Correction: {PriceActionHelper.GetCorrectionType(item.Value)} " +
+                        $" -- PatternType: {item.Value.PatternType}");
+                }
+                File.WriteAllText("_GetChildSwings.txt", str.ToString());
+            }
+        }
+        public void WriteSwingList(List<PriceActionSwing> swings)
+        {
+            if (swings != null)
+            {
+                StringBuilder str = new StringBuilder();
+                str.AppendLine("--------- Last Swing Candles ---------");
+                foreach (var item in swings)
+                {
+                    str.AppendLine(
+                        $" -- PatternType: {item.PatternType}" +
+                        $" -- Impulse: {PriceActionHelper.GetImpulseType(item)} " +
+                        $" -- Correction: {PriceActionHelper.GetCorrectionType(item)} ");
+                }
+                File.WriteAllText("_GetChildSwings.txt", str.ToString());
+            }
+        }
+
+        #endregion
+
     }
 }

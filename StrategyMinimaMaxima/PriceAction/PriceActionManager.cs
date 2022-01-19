@@ -8,11 +8,11 @@ namespace StrategyMinimaMaxima.PriceAction
 {
     public class PriceActionManager
     {
-        private PriceActionHelper _priceActionHelper;
+        //private PriceActionHelper _priceActionHelper;
         long _candleSeq = -1;
         public PriceActionManager()
         {
-            _priceActionHelper = new PriceActionHelper();
+            //_priceActionHelper = new PriceActionHelper();
             Candles = new List<Candle>();
             ValleyCandles = new List<Candle>();
             PeakCandles = new List<Candle>();
@@ -84,8 +84,8 @@ namespace StrategyMinimaMaxima.PriceAction
             foreach (var item in Swings)
             {
                 str.AppendLine($"Index:{item.Key} = {item.Value.PatternType}" +
-                    $" -- ImpulseType: {_priceActionHelper.GetImpulseType(item.Value)}" +
-                    $" -- CorrectionType: {_priceActionHelper.GetCorrectionType(item.Value)}");
+                    $" -- ImpulseType: {PriceActionHelper.GetImpulseType(item.Value)}" +
+                    $" -- CorrectionType: {PriceActionHelper.GetCorrectionType(item.Value)}");
             }
             File.WriteAllText(logName, str.ToString());
         }

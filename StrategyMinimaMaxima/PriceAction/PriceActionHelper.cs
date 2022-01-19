@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace StrategyMinimaMaxima.PriceAction
 {
-    public class PriceActionHelper
+    public static class PriceActionHelper
     {
-        public ImpulseType GetImpulseType(PriceActionSwing swing)
+        public static ImpulseType GetImpulseType(PriceActionSwing swing)
         {
             if (swing.Leg1 == null || swing.Leg2 == null || swing.Leg3 == null)
                 throw new ArgumentNullException("Swing legs cannot be null");
@@ -67,7 +67,7 @@ namespace StrategyMinimaMaxima.PriceAction
             }
         }
 
-        public CorrectionType GetCorrectionType(PriceActionSwing swing)
+        public static CorrectionType GetCorrectionType(PriceActionSwing swing)
         {
 
             if (swing.Leg1 == null || swing.Leg2 == null || swing.Leg3 == null)
