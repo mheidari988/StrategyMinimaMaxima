@@ -62,11 +62,12 @@ namespace StrategyMinimaMaxima
                 Id = "BTCUSDT_PERPETUAL@BNB",
                 Code = "BTCUSDT",
                 PriceStep = 0.01m,
-                Board = ExchangeBoard.Binance
+                Board = ExchangeBoard.Binance,
+                VolumeStep = 0.01M,
             };
 
             //.................initialize portfolio...................
-            _portfolio = new Portfolio { Name = "test account", BeginValue = 1000000 };
+            _portfolio = new Portfolio { Name = "test account", BeginValue = 1000 };
             var storageRegistry = new StorageRegistry
             {
                 DefaultDrive = new LocalMarketDataDrive(_pathHistory),
@@ -90,13 +91,15 @@ namespace StrategyMinimaMaxima
 
             _15mCandleSeries = new CandleSeries(typeof(TimeFrameCandle), _security, TimeSpan.FromMinutes(15))
             {
-                BuildCandlesMode = MarketDataBuildModes.Load
+                BuildCandlesMode = MarketDataBuildModes.LoadAndBuild,
+                BuildCandlesFrom = MarketDataTypes.Trades
             };
 
             //.................specify candle series information...................
             _1hCandleSeries = new CandleSeries(typeof(TimeFrameCandle), _security, TimeSpan.FromMinutes(60))
             {
-                BuildCandlesMode = MarketDataBuildModes.LoadAndBuild
+                BuildCandlesMode = MarketDataBuildModes.LoadAndBuild,
+                BuildCandlesFrom = MarketDataTypes.Trades
             };
 
 
@@ -106,7 +109,7 @@ namespace StrategyMinimaMaxima
 
             //.................connector configurations and events handlers...................
             _connector.CandleSeriesProcessing += Connector_CandleSeriesProcessing;
-            
+
             _connector.NewSecurity += Connector_NewSecurity;
             _connector.MarketDepthChanged += MarketDepthControl.UpdateDepth;
             _connector.NewOrder += OrderGrid.Orders.Add;
@@ -120,7 +123,14 @@ namespace StrategyMinimaMaxima
             //    Portfolio = _portfolio,
             //};
 
-            _strategy = new FirstStrategy(_1hCandleSeries, _15mCandleSeries, long.Parse(txtProcessLimit.Text))
+            //_strategy = new FirstStrategy(_1hCandleSeries, _15mCandleSeries, long.Parse(txtProcessLimit.Text))
+            //{
+            //    Security = _security,
+            //    Connector = _connector,
+            //    Portfolio = _portfolio,
+            //};
+
+            _strategy = new StopLossTakeProfitStrategy(_1hCandleSeries, _15mCandleSeries, long.Parse(txtProcessLimit.Text))
             {
                 Security = _security,
                 Connector = _connector,
@@ -178,8 +188,7 @@ namespace StrategyMinimaMaxima
         private void Strategy_NewMyTrade(MyTrade myTrade)
         {
             var data = new ChartDrawData();
-            data.Group(myTrade.Trade.Time)
-                .Add(_tradesElem, myTrade);
+            data.Group(myTrade.Trade.Time).Add(_tradesElem, myTrade);
             Chart.Draw(data);
         }
 
@@ -192,6 +201,12 @@ namespace StrategyMinimaMaxima
         private void Connector_CandleSeriesProcessing(CandleSeries candleSeries, Candle candle)
         {
             Chart.Draw(_candleElement, candle);
+        }
+
+        private void btnOpenMainClicked(object sender, RoutedEventArgs e)
+        {
+            MainWin win = new MainWin();
+            win.Show();
         }
     }
 }

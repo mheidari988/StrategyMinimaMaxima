@@ -184,7 +184,7 @@ namespace StrategyMinimaMaxima.PriceAction
             return null;
         }
 
-        public List<PriceActionSwing>? _GetChildSwingsOf(LegStatus leg)
+        public List<PriceActionSwing>? GetChildSwingsOf(LegStatus leg)
         {
             CheckNullObjects();
 
@@ -200,21 +200,21 @@ namespace StrategyMinimaMaxima.PriceAction
                                 where swing.Leg1.BeginElement.Candle.SeqNum
                                 >= ParrentManager.Swings.LastOrDefault().Value.Leg1.BeginElement.Candle.SeqNum * Hierarchy
                                 && swing.Leg1.BeginElement.Candle.SeqNum
-                                <= ParrentManager.Swings.LastOrDefault().Value.Leg1.EndElement.Candle.SeqNum * Hierarchy
-                                select swing).ToList();
+                                < ParrentManager.Swings.LastOrDefault().Value.Leg1.EndElement.Candle.SeqNum * Hierarchy
+                                select swing).SkipLast(2).ToList();
                     case LegStatus.Leg2:
                         return (from swing in ChildManager.Swings.Values
                                 where swing.Leg1.BeginElement.Candle.SeqNum
                                 >= ParrentManager.Swings.LastOrDefault().Value.Leg2.BeginElement.Candle.SeqNum * Hierarchy
                                 && swing.Leg1.BeginElement.Candle.SeqNum
-                                <= ParrentManager.Swings.LastOrDefault().Value.Leg2.EndElement.Candle.SeqNum * Hierarchy
+                                < ParrentManager.Swings.LastOrDefault().Value.Leg2.EndElement.Candle.SeqNum * Hierarchy
                                 select swing).ToList();
                     case LegStatus.Leg3:
                         return (from swing in ChildManager.Swings.Values
                                 where swing.Leg1.BeginElement.Candle.SeqNum
                                 >= ParrentManager.Swings.LastOrDefault().Value.Leg3.BeginElement.Candle.SeqNum * Hierarchy
                                 && swing.Leg1.BeginElement.Candle.SeqNum
-                                <= ParrentManager.Swings.LastOrDefault().Value.Leg3.EndElement.Candle.SeqNum * Hierarchy
+                                < ParrentManager.Swings.LastOrDefault().Value.Leg3.EndElement.Candle.SeqNum * Hierarchy
                                 select swing).ToList();
                     default:
                         break;
@@ -223,7 +223,7 @@ namespace StrategyMinimaMaxima.PriceAction
             return null;
         }
 
-        public List<PriceActionSwing>? _GetChildSwingsFrom(LegStatus leg)
+        public List<PriceActionSwing>? GetChildSwingsFrom(LegStatus leg)
         {
             CheckNullObjects();
 

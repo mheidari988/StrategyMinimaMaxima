@@ -27,5 +27,11 @@ namespace StrategyMinimaMaxima.PriceAction
 
         public Candle? Candle { get; private set; }
 
+        public override string ToString()
+        {
+            return $"SeqNum:{Candle.SeqNum}{System.Environment.NewLine}Open Time:{Candle.OpenTime}{System.Environment.NewLine}" +
+                $"Open: {Candle.OpenPrice} - Close:{Candle.ClosePrice} - High:{Candle.HighPrice} - Low:{Candle.LowPrice}{System.Environment.NewLine}" +
+                $"Momentum:{CandleMomentum} - PeakValleyType:{PeakValleyType} - PeakValleyStatus:{PeakValleyStatus}";
+        }
     }
 }

@@ -10,7 +10,7 @@
   <Class Name="StrategyMinimaMaxima.PriceAction.PriceActionSwing">
     <Position X="9.25" Y="0.5" Width="2" />
     <TypeIdentifier>
-      <HashCode>YAEAAAAAAAIBAAAAIAAAAAAABAAgAAIAAAAAAAAABAA=</HashCode>
+      <HashCode>YAEAAAAAAAIBAAAAIAAAAAAABAAgAAIAAAAAAIAAAAA=</HashCode>
       <FileName>PriceAction\PriceActionSwing.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -24,7 +24,7 @@
   <Class Name="StrategyMinimaMaxima.PriceAction.PriceActionElement">
     <Position X="5.25" Y="0.5" Width="2" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAEAAAEAAAAAECAAAAABAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAAAAAAAAAAEAEAEAAAAAECAAAAABAAAAAAAAAAAA=</HashCode>
       <FileName>PriceAction\PriceActionElement.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -40,6 +40,13 @@
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAACAAAAA=</HashCode>
       <FileName>PriceAction\PriceActionHelper.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="StrategyMinimaMaxima.PriceAction.PriceActionProcessor">
+    <Position X="5.25" Y="4" Width="3.5" />
+    <TypeIdentifier>
+      <HashCode>AABYCAAAAAAABAAAABAAAAAAgAADAAAAABAgAAAgAAA=</HashCode>
+      <FileName>PriceAction\PriceActionProcessor.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Enum Name="StrategyMinimaMaxima.PriceAction.MomentumType">
@@ -82,6 +89,13 @@
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAQAAhA=</HashCode>
       <FileName>PriceAction\CorrectionType.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="StrategyMinimaMaxima.PriceAction.LegStatus">
+    <Position X="2.5" Y="5.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>YAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABA=</HashCode>
+      <FileName>PriceAction\LegStatus.cs</FileName>
     </TypeIdentifier>
   </Enum>
   <Font Name="Segoe UI" Size="9" />

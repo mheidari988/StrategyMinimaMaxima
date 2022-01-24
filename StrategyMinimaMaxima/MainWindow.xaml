@@ -13,13 +13,14 @@
             <ColumnDefinition Width="200"/>
             <ColumnDefinition Width="200"/>
             <ColumnDefinition Width="200"/>
-            <ColumnDefinition Width="598"/>
+            <ColumnDefinition Width="223"/>
+            <ColumnDefinition Width="375"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="30"/>
             <RowDefinition/>
         </Grid.RowDefinitions>
-        <TabControl Grid.Row="1" Grid.ColumnSpan="5" >
+        <TabControl Grid.Row="1" Grid.ColumnSpan="6" >
             <TabItem Header="Chart&amp;MarketDepth">
                 <Grid Background="#FFE5E5E5">
                     <Grid.ColumnDefinitions>
@@ -57,11 +58,12 @@
             </TabItem>
         </TabControl>
         <xaml:CandleSettingsEditor x:Name="CandleSettingsEditor" Grid.Row="0" Grid.Column="0"/>
-        <Button x:Name="Start" Content="Start" Click="Start_Click"  Grid.Row="0" Grid.Column="4" Margin="0,0,398,0"/>
+        <Button x:Name="Start" Content="Start" Click="Start_Click"  Grid.Row="0" Grid.Column="4" Margin="0,0,12,0"/>
 
         <DatePicker Grid.Row="0" Grid.Column="1" x:Name="DatePickerBegin"/>
         <DatePicker x:Name="DatePickerEnd" Grid.Row="0" Grid.Column="2"/>
-        <TextBox Grid.Column="3" Name="txtProcessLimit" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Center" Width="185"/>
+        <TextBox Grid.Column="3" Name="txtProcessLimit" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Center" Width="185" Height="18"/>
+        <Button Name="btnOpenMainWin" Grid.Column="5" Content="Open Main" Click="btnOpenMainClicked" HorizontalAlignment="Left" VerticalAlignment="Center" Width="174" Height="30"/>
 
 
     </Grid>

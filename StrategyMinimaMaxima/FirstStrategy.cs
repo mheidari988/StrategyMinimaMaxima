@@ -59,9 +59,7 @@ namespace StrategyMinimaMaxima
 
             if (manager1h.Swings.Count > 0)
             {
-                //WriteCandleList(processor.GetChildCandlesFrom(LegStatus.Leg3));
-                //WriteSwingDic(processor.GetChildSwingsOf(LegStatus.Leg1));
-                //WriteSwingList(processor._GetChildSwingsOf(LegStatus.Leg1));
+                WriteSwingList(processor.GetChildSwingsOf(LegStatus.Leg1));
             }
         }
 
@@ -77,37 +75,37 @@ namespace StrategyMinimaMaxima
                     str.AppendLine($"SeqNo {item.SeqNum} -- Type: -- Values: Open:{item.OpenPrice} ," +
                         $" Close:{item.ClosePrice} High:{item.HighPrice} Low:{item.LowPrice}");
                 }
-                File.WriteAllText("_GetChildCandlesFrom.txt", str.ToString());
-            }
-        }
-        public void WriteSwingDic(Dictionary<long,PriceActionSwing> swings)
-        {
-            if (swings != null)
-            {
-                StringBuilder str = new StringBuilder();
-                str.AppendLine("--------- Last Swing Candles ---------");
-                foreach (var item in swings)
-                {
-                    str.AppendLine($"Index: {item.Key}" +
-                        $" -- Impulse: {PriceActionHelper.GetImpulseType(item.Value)} " +
-                        $" -- Correction: {PriceActionHelper.GetCorrectionType(item.Value)} " +
-                        $" -- PatternType: {item.Value.PatternType}");
-                }
-                File.WriteAllText("_GetChildSwings.txt", str.ToString());
+                File.WriteAllText("_GetChildCandles.txt", str.ToString());
             }
         }
         public void WriteSwingList(List<PriceActionSwing> swings)
         {
-            if (swings != null)
+            if (swings != null && swings.Count>0)
             {
                 StringBuilder str = new StringBuilder();
-                str.AppendLine("--------- Last Swing Candles ---------");
+                str.AppendLine("--------- Last Swing Information ---------");
+                str.AppendLine($"Total Swing Count: {swings.Count}" +
+                    $" - Swing Begining Candle SeqNum: {swings[0].Leg1.BeginElement.Candle.SeqNum}" +
+                    $" - Swing Ending Candle SeqNum: {swings[swings.Count - 1].Leg3.EndElement.Candle.SeqNum}");
                 foreach (var item in swings)
                 {
+                    str.AppendLine();
+                    str.AppendLine("######################################################################");
                     str.AppendLine(
                         $" -- PatternType: {item.PatternType}" +
                         $" -- Impulse: {PriceActionHelper.GetImpulseType(item)} " +
                         $" -- Correction: {PriceActionHelper.GetCorrectionType(item)} ");
+                    str.AppendLine("######################################################################");
+                    str.AppendLine();
+                    str.AppendLine($"**Leg1 Begin Element: {item.Leg1.BeginElement}{System.Environment.NewLine}" +
+                        $"**Leg1 End Element: {item.Leg1.EndElement}");
+                    str.AppendLine();
+                    str.AppendLine($"**Leg2 Begin Element: {item.Leg2.BeginElement}{System.Environment.NewLine}" +
+                        $"**Leg2 End Element: {item.Leg2.EndElement}");
+                    str.AppendLine();
+                    str.AppendLine($"**Leg3 Begin Element: {item.Leg3.BeginElement}{System.Environment.NewLine}" +
+                        $"**Leg3 End Element: {item.Leg3.EndElement}");
+                    str.AppendLine();
                 }
                 File.WriteAllText("_GetChildSwings.txt", str.ToString());
             }
