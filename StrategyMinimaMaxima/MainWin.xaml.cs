@@ -21,6 +21,7 @@ using StockSharp.Messages;
 using StockSharp.Xaml;
 using StockSharp.Algo.Candles;
 using StockSharp.Xaml.Charting;
+using Ecng.Xaml;
 
 namespace StrategyMinimaMaxima
 {
@@ -40,6 +41,7 @@ namespace StrategyMinimaMaxima
         {
             InitializeComponent();
 
+            _connector.PositionChanged += _connector_PositionChanged;
             _connector.TickTradeReceived += _connector_TickTradeReceived;
             _connector.MarketDepthReceived += _connector_MarketDepthReceived;
 
@@ -61,6 +63,11 @@ namespace StrategyMinimaMaxima
             };
         }
 
+        private void _connector_PositionChanged(Position obj)
+        {
+
+        }
+
 
 
         #region Private Methods
@@ -74,6 +81,51 @@ namespace StrategyMinimaMaxima
                 _connector.UnSubscribe(sub);
 
             _subscriptions.Clear();
+        }
+
+        private void UpdateInfoTextBox()
+        {
+            StringBuilder str = new StringBuilder();
+
+            if (PortfolioEditor.SelectedPortfolio != null && SecurityPicker.SelectedSecurity != null)
+            {
+                var pos = _connector.GetPosition(PortfolioEditor.SelectedPortfolio, SecurityPicker.SelectedSecurity);
+
+                str.AppendLine($"BeginValue: {pos.BeginValue}");
+                str.AppendLine($"AveragePrice: {pos.AveragePrice}");
+                str.AppendLine($"BlockedValue: {pos.BlockedValue}");
+                str.AppendLine($"BuyOrdersCount: {pos.BuyOrdersCount}");
+                str.AppendLine($"BuyOrdersMargin: {pos.BuyOrdersMargin}");
+                str.AppendLine($"ClientCode: {pos.ClientCode}");
+                str.AppendLine($"Commission: {pos.Commission}");
+                str.AppendLine($"CommissionMaker: {pos.CommissionMaker}");
+                str.AppendLine($"CommissionTaker: {pos.CommissionTaker}");
+                str.AppendLine($"Currency: {pos.Currency}");
+                str.AppendLine($"CurrentPrice: {pos.CurrentPrice}");
+                str.AppendLine($"CurrentValue: {pos.CurrentValue}");
+                str.AppendLine($"DepoName: {pos.DepoName}");
+                str.AppendLine($"Description: {pos.Description}");
+                str.AppendLine($"ExpirationDate: {pos.ExpirationDate}");
+                str.AppendLine($"LastChangeTime: {pos.LastChangeTime}");
+                str.AppendLine($"Leverage: {pos.Leverage}");
+                str.AppendLine($"LimitType: {pos.LimitType}");
+                str.AppendLine($"LocalTime: {pos.LocalTime}");
+                str.AppendLine($"OrdersCount: {pos.OrdersCount}");
+                str.AppendLine($"OrdersMargin: {pos.OrdersMargin}");
+                str.AppendLine($"Portfolio: {pos.Portfolio}");
+                str.AppendLine($"RealizedPnL: {pos.RealizedPnL}");
+                str.AppendLine($"Security: {pos.Security}");
+                str.AppendLine($"SellOrdersCount: {pos.SellOrdersCount}");
+                str.AppendLine($"SellOrdersMargin: {pos.SellOrdersMargin}");
+                str.AppendLine($"SettlementPrice: {pos.SettlementPrice}");
+                str.AppendLine($"Side: {pos.Side}");
+                str.AppendLine($"StrategyId: {pos.StrategyId}");
+                str.AppendLine($"TradesCount: {pos.TradesCount}");
+                str.AppendLine($"UnrealizedPnL: {pos.UnrealizedPnL}");
+                str.AppendLine($"VariationMargin: {pos.VariationMargin}");
+
+                txtInfo.Text = str.ToString();
+            }
         }
 
         #endregion
@@ -99,7 +151,9 @@ namespace StrategyMinimaMaxima
         private void _connector_TickTradeReceived(Subscription sub, Trade trade)
         {
             if (trade.Security == _selectedSecurity)
+            {
                 TradeGrid.Trades.Add(trade);
+            }
         }
 
         private void _connector_NewMyTrade(MyTrade obj)
@@ -147,6 +201,8 @@ namespace StrategyMinimaMaxima
             _subscriptions.Add(_connector.SubscribeLevel1(security));
 
             _subscriptions.Add(_connector.SubscribeTrades(security));
+
+            _subscriptions.Add(_connector.SubscribePositions(security));
 
             MarketDepthControl.Clear();
             _subscriptions.Add(_connector.SubscribeMarketDepth(security));
@@ -197,6 +253,11 @@ namespace StrategyMinimaMaxima
                 Direction = Sides.Buy,
             };
             _connector.RegisterOrder(order);
+        }
+
+        private void btnInfo_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

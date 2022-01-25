@@ -20,6 +20,7 @@ namespace StrategyMinimaMaxima
     {
         private readonly CandleSeries ParrentCandleSeries;
         private readonly CandleSeries ChildCandleSeries;
+        private readonly CandleSeries OneMinSeries;
         private readonly PriceActionManager ParrentManager = new PriceActionManager();
         private readonly PriceActionManager ChildManager = new PriceActionManager();
         private PriceActionProcessor processor = new PriceActionProcessor();
@@ -30,13 +31,16 @@ namespace StrategyMinimaMaxima
         private bool childReadyToBuy = false;
         private bool isSignalByNewLeg = false;
 
+        private long orderNo = 0;
+
         private decimal _sl;
         private decimal _tp;
 
-        public StopLossTakeProfitStrategy(CandleSeries parrentCandleSeries, CandleSeries childCandleSeries, long processLimit = 0)
+        public StopLossTakeProfitStrategy(CandleSeries parrentCandleSeries, CandleSeries childCandleSeries, CandleSeries oneMinSeries, long processLimit = 0)
         {
             ParrentCandleSeries = parrentCandleSeries;
             ChildCandleSeries = childCandleSeries;
+            OneMinSeries = oneMinSeries;
             ParrentManager.ProcessLimit = processLimit;
             ChildManager.ProcessLimit = processLimit * 4;
         }
@@ -44,87 +48,73 @@ namespace StrategyMinimaMaxima
         protected override void OnStarted()
         {
             Connector.CandleSeriesProcessing += CandleManager_Processing;
-            Connector.NewMyTrade += Connector_NewMyTrade;
             Connector.WhenCandlesFinished(ParrentCandleSeries).Do(ParrentCandleFinished).Apply(this);
             Connector.WhenCandlesFinished(ChildCandleSeries).Do(ChildCandleFinished).Apply(this);
             Connector.SubscribeCandles(ChildCandleSeries);
             Connector.SubscribeCandles(ParrentCandleSeries);
+            Connector.SubscribeCandles(OneMinSeries);
             base.OnStarted();
-        }
-
-        private void CheckIfWeCanTrade()
-        {
-            if (MyTrades.Count() < 1)
-            {
-                if (parrentReadyToBuy && childReadyToBuy)
-                {
-
-                }
-                else if (parrentReadyToSell && childReadyToSell && Position >= 0)
-                {
-                    var sellOrder = new Order()
-                    {
-                        Type = OrderTypes.Market,
-                        Portfolio = Portfolio,
-                        Volume = 0.01M,
-                        Security = Security,
-                        Direction = Sides.Sell
-                    };
-                    var sellOrderStopLoss = new Order()
-                    {
-                        Type = OrderTypes.Conditional,
-                        Portfolio = Portfolio,
-                        Volume = 0.01M,
-                        Security = Security,
-                        Price = Math.Round(_sl, 2),
-                        Condition = new BinanceOrderCondition()
-                        {
-                            Type = BinanceOrderConditionTypes.StopLoss,
-                            StopPrice = Math.Round(_sl, 2)
-                        }
-                    };
-                    var sellOrderTakeProfit = new Order()
-                    {
-                        Type = OrderTypes.Conditional,
-                        Portfolio = Portfolio,
-                        Volume = 0.01M,
-                        Security = Security,
-                        Price = Math.Round(_tp, 2),
-                        Condition = new BinanceOrderCondition()
-                        {
-                            Type = BinanceOrderConditionTypes.TakeProfit,
-                            StopPrice = Math.Round(_tp, 2)
-                        }
-                    };
-                    RegisterOrder(sellOrder);
-                    RegisterOrder(sellOrderStopLoss);
-                    RegisterOrder(sellOrderTakeProfit);
-                }
-            }
         }
 
         private void CandleManager_Processing(CandleSeries candleSeries, Candle candle)
         {
+            //----------------- Here we check to protect position based on TP or SL ---------------------
+
+            if (((TimeFrameCandle)candle).TimeFrame == TimeSpan.FromMinutes(1))
+            {
+                if (candle.State == CandleStates.Finished)
+                {
+                    if (Position >= 0)
+                    {
+                        var order = this.SellAtMarket(0.01m);
+                        order.WhenNewTrade(Connector).Do(NewOderTrade).Until(() => order.State == OrderStates.Done).Apply(this);
+                        ChildStrategies.ToList().ForEach(s => s.Stop());
+                        RegisterOrder(order);
+                    }
+                }
+            }
+            //---------------- Checking the state of Finished for Child Candle -------------------
+
             if (((TimeFrameCandle)candle).TimeFrame == TimeSpan.FromMinutes(15))
             {
-                if (candle.State != CandleStates.Finished) return;
-
-                ChildManager.AddCandle(candle);
-                processor.ChildManager = ChildManager;
+                if (candle.State == CandleStates.Finished)
+                {
+                    ChildManager.AddCandle(candle);
+                    processor.ChildManager = ChildManager;
+                }
             }
-            else if (((TimeFrameCandle)candle).TimeFrame == TimeSpan.FromMinutes(60))
-            {
-                if (candle.State != CandleStates.Finished) return;
+            
+            //---------------- Checking the state of Finished for Parrent Candle -------------------
 
-                ParrentManager.AddCandle(candle);
-                processor.ParrentManager = ParrentManager;
+            if (((TimeFrameCandle)candle).TimeFrame == TimeSpan.FromMinutes(60))
+            {
+                if (candle.State == CandleStates.Finished)
+                {
+                    ParrentManager.AddCandle(candle);
+                    processor.ParrentManager = ParrentManager;
+                }
             }
 
             //----------------------------Check available trades count, and if there is no trade, start one.
 
-            CheckIfWeCanTrade();
+        }
 
-            //----------------------------Protect Current Order
+        protected void NewOderTrade(MyTrade myTrade)
+        {
+            var takeProfit = new TakeProfitStrategy(myTrade, 500)
+            {
+                WaitAllTrades = true,
+            };
+            var stopLoss = new StopLossStrategy(myTrade, 500)
+            {
+                WaitAllTrades = true,
+            };
+
+            var protectiveStrategies = new TakeProfitStopLossStrategy(takeProfit, stopLoss)
+            {
+                WaitAllTrades = true,
+            };
+            ChildStrategies.Add(protectiveStrategies);
         }
 
         private void ChildCandleFinished(Candle candle)
@@ -173,7 +163,7 @@ namespace StrategyMinimaMaxima
             }
         }
 
-        private void ParrentCandleFinished(Candle cndl)
+        private void ParrentCandleFinished(Candle candle)
         {
             if (ParrentSwing != null && GrandParrentSwing != null)
             {
@@ -187,6 +177,11 @@ namespace StrategyMinimaMaxima
                         isSignalByNewLeg = false;
                     }
                 }
+            }
+            else
+            {
+                parrentReadyToSell = false;
+                isSignalByNewLeg = false;
             }
             if (ParrentSwing != null && GrandParrentSwing != null && GrandGrandParrentSwing != null)
             {
@@ -204,16 +199,11 @@ namespace StrategyMinimaMaxima
                     }
                 }
             }
-        }
-
-        private void Connector_NewMyTrade(MyTrade myTrade)
-        {
-            StringBuilder str = new StringBuilder();
-            foreach (var item in Orders)
+            else
             {
-                str.AppendLine(item.ToString());
+                parrentReadyToSell = false;
+                isSignalByNewLeg = false;
             }
-            File.WriteAllText("_orders.txt", str.ToString());
         }
 
         #region Properties

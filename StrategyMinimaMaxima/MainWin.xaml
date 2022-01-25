@@ -57,12 +57,6 @@
                         <TabItem Header="My Orders">
                             <xaml:OrderGrid x:Name="OrderGrid" Grid.Column="0" Grid.Row="1"/>
                         </TabItem>
-                        <TabItem Header="Strategies Dashboard">
-                            <xaml:StrategiesDashboard Name="StrategiesDashboard" />
-                        </TabItem>
-                        <TabItem Header="Strategies Statistics Panel">
-                            <xaml:StrategiesStatisticsPanel />
-                        </TabItem>
                     </TabControl>
                 </Grid>
             </TabItem>
@@ -79,6 +73,24 @@
             <TabItem Header="Monitor">
                 <Grid Background="#FFE5E5E5">
                     <xaml:Monitor x:Name="Monitor" />
+                </Grid>
+            </TabItem>
+            <TabItem Header="Info">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="25*"/>
+                        <RowDefinition Height="418*"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="26*"/>
+                        <ColumnDefinition Width="28*"/>
+                        <ColumnDefinition Width="27*"/>
+                        <ColumnDefinition Width="93*"/>
+                        <ColumnDefinition Width="174*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBox Name="txtInfo" Grid.Column="0" Grid.ColumnSpan="4" Grid.Row="1" TextWrapping="Wrap"/>
+                    <Button Content="Info" Name="btnInfo" Click="btnInfo_Click" Grid.ColumnSpan="2" Margin="0,0,112,0"/>
                 </Grid>
             </TabItem>
         </TabControl>

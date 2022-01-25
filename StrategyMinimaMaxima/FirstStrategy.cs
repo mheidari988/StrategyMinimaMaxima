@@ -41,22 +41,22 @@ namespace StrategyMinimaMaxima
         {
             if (((TimeFrameCandle)candle).TimeFrame == TimeSpan.FromMinutes(15))
             {
-                if (candle.State != CandleStates.Finished) return;
-
-                manager15m.AddCandle(candle);
-                manager15m.WriteLocalLog("_FirstStrategy_15m_Log.txt");
-                processor.ChildManager = manager15m;
+                if (candle.State == CandleStates.Finished)
+                {
+                    manager15m.AddCandle(candle);
+                    manager15m.WriteLocalLog("_FirstStrategy_15m_Log.txt");
+                    processor.ChildManager = manager15m;
+                }
             }
-            else if (((TimeFrameCandle)candle).TimeFrame == TimeSpan.FromMinutes(60))
+            if (((TimeFrameCandle)candle).TimeFrame == TimeSpan.FromMinutes(60))
             {
-                if (candle.State != CandleStates.Finished) return;
-
-                manager1h.AddCandle(candle);
-                manager1h.WriteLocalLog("_FirstStrategy_1h_Log.txt");
-                processor.ParrentManager = manager1h;
+                if (candle.State == CandleStates.Finished)
+                {
+                    manager1h.AddCandle(candle);
+                    manager1h.WriteLocalLog("_FirstStrategy_1h_Log.txt");
+                    processor.ParrentManager = manager1h;
+                }
             }
-
-
             if (manager1h.Swings.Count > 0)
             {
                 WriteSwingList(processor.GetChildSwingsOf(LegStatus.Leg1));

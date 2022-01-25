@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Media;
+using System.Collections;
 using Ecng.Collections;
 using Ecng.Common;
 using StockSharp.Algo.Candles;
@@ -14,6 +15,8 @@ using StockSharp.Logging;
 using StockSharp.Messages;
 using StockSharp.Xaml;
 using StockSharp.Xaml.Charting;
+using System.Collections.Generic;
+using StockSharp.Algo;
 
 namespace StrategyMinimaMaxima
 {
@@ -25,8 +28,11 @@ namespace StrategyMinimaMaxima
         private HistoryEmulationConnector _connector;
         private ChartCandleElement _candleElement;
         private ChartTradeElement _tradesElem;
-        private CandleSeries _1hCandleSeries;
-        private CandleSeries _15mCandleSeries;
+
+        private CandleSeries _candleSeries_1h;
+        private CandleSeries _candleSeries_15m;
+        private CandleSeries _candleSeries_1m;
+
         private Security _security;
         private Portfolio _portfolio;
         private readonly LogManager _logManager;
@@ -83,26 +89,26 @@ namespace StrategyMinimaMaxima
                     StartDate = DatePickerBegin.SelectedDate.Value.ChangeKind(DateTimeKind.Utc),
                     StopDate = DatePickerEnd.SelectedDate.Value.ChangeKind(DateTimeKind.Utc),
                 },
-                LogLevel = LogLevels.Info,
+                LogLevel = LogLevels.Info
             };
 
             //.................add connector to the log manager...................
             _logManager.Sources.Add(_connector);
 
-            _15mCandleSeries = new CandleSeries(typeof(TimeFrameCandle), _security, TimeSpan.FromMinutes(15))
+            _candleSeries_1m = new CandleSeries(typeof(TimeFrameCandle), _security, TimeSpan.FromMinutes(1))
             {
-                BuildCandlesMode = MarketDataBuildModes.LoadAndBuild,
-                BuildCandlesFrom = MarketDataTypes.Trades
+                BuildCandlesMode = MarketDataBuildModes.LoadAndBuild
             };
 
-            //.................specify candle series information...................
-            _1hCandleSeries = new CandleSeries(typeof(TimeFrameCandle), _security, TimeSpan.FromMinutes(60))
+            _candleSeries_15m = new CandleSeries(typeof(TimeFrameCandle), _security, TimeSpan.FromMinutes(15))
             {
-                BuildCandlesMode = MarketDataBuildModes.LoadAndBuild,
-                BuildCandlesFrom = MarketDataTypes.Trades
+                BuildCandlesMode = MarketDataBuildModes.LoadAndBuild
             };
 
-
+            _candleSeries_1h = new CandleSeries(typeof(TimeFrameCandle), _security, TimeSpan.FromMinutes(60))
+            {
+                BuildCandlesMode = MarketDataBuildModes.LoadAndBuild
+            };
 
             //.................initialize chart...................
             InitChart();
@@ -115,22 +121,21 @@ namespace StrategyMinimaMaxima
             _connector.NewOrder += OrderGrid.Orders.Add;
             _connector.OrderRegisterFailed += OrderGrid.AddRegistrationFail;
 
-            //.................initializing strategy...................
-            //_strategy = new MinimaMaximaStrategy(_1hCandleSeries, long.Parse(txtProcessLimit.Text))
+            //_strategy = new FirstStrategy(_candleSeries_1h, _candleSeries_15m, long.Parse(txtProcessLimit.Text))
             //{
             //    Security = _security,
             //    Connector = _connector,
             //    Portfolio = _portfolio,
             //};
 
-            //_strategy = new FirstStrategy(_1hCandleSeries, _15mCandleSeries, long.Parse(txtProcessLimit.Text))
+            //_strategy = new StopLossTakeProfitStrategy(_candleSeries_1h, _candleSeries_15m, _candleSeries_1m, long.Parse(txtProcessLimit.Text))
             //{
             //    Security = _security,
             //    Connector = _connector,
             //    Portfolio = _portfolio,
             //};
 
-            _strategy = new StopLossTakeProfitStrategy(_1hCandleSeries, _15mCandleSeries, long.Parse(txtProcessLimit.Text))
+            _strategy = new MomentumStrategy(_candleSeries_1h, _candleSeries_15m, _candleSeries_1m, long.Parse(txtProcessLimit.Text))
             {
                 Security = _security,
                 Connector = _connector,
@@ -151,10 +156,6 @@ namespace StrategyMinimaMaxima
             //.................connecting connector...................
             _connector.Connect();
 
-            _connector.SendInMessage(new CommissionRuleMessage
-            {
-                Rule = new CommissionPerTradeRule { Value = 0.07m }
-            });
         }
         private void InitChart()
         {
@@ -200,7 +201,10 @@ namespace StrategyMinimaMaxima
 
         private void Connector_CandleSeriesProcessing(CandleSeries candleSeries, Candle candle)
         {
-            Chart.Draw(_candleElement, candle);
+            if (((TimeFrameCandle)candle).TimeFrame == TimeSpan.FromMinutes(15))
+            {
+                Chart.Draw(_candleElement, candle);
+            }
         }
 
         private void btnOpenMainClicked(object sender, RoutedEventArgs e)
