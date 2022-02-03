@@ -75,8 +75,7 @@ namespace StrategyMinimaMaxima.PriceAction
                     if (ParrentManager.Swings.Count > 0)
                     {
                         LogHelper.WriteSwingList(ParrentManager.Swings.Values.ToList(), "_ParrentSwings.txt");
-                        LogHelper.WriteSwingList(processor.GetChildSwingsFromLastParrentSwing(LegStatus.Leg1), "_GetChildSwingsFromLastParrentSwing.txt");
-
+                        LogHelper.WriteSwingList(processor.GetChildSwingsOfLastParrent(LegStatus.Leg2), "_GetChildSwingsFromLastParrentSwing.txt");
                     }
                 }
             }

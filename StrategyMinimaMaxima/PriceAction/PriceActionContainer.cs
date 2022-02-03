@@ -285,16 +285,6 @@ namespace StrategyMinimaMaxima.PriceAction
             return container;
         }
 
-        public List<Candle>? GetLastSwingsCandles()
-        {
-            if (Swings == null) return null;
-            if (Swings.Count < 1) return null;
-            var _lastSwing = Swings[Swings.Count - 1];
-            var _beginCandleSeqNum = _lastSwing.Leg1.BeginElement.Candle.SeqNum;
-            var _endCandleSeqNum = _lastSwing.Leg3.EndElement.Candle.SeqNum;
-            return Candles.FindAll(s => s.SeqNum >= _beginCandleSeqNum && s.SeqNum <= _endCandleSeqNum);
-        }
-
         //----------------- Public Properties ----------------------
 
         #region Public Properties

@@ -10,11 +10,9 @@ namespace StrategyMinimaMaxima.PriceAction
     {
         public PriceActionSwing(PriceActionLeg leg1, PriceActionLeg leg2, PriceActionLeg leg3)
         {
-            if (leg1 == null || leg2 == null || leg3 == null)
-                throw new ArgumentNullException("Null elements could not process");
-            Leg1 = leg1;
-            Leg2 = leg2;
-            Leg3 = leg3;
+            Leg1 = leg1 ?? throw new ArgumentNullException(nameof(leg1));
+            Leg2 = leg2 ?? throw new ArgumentNullException(nameof(leg2));
+            Leg3 = leg3 ?? throw new ArgumentNullException(nameof(leg3));
             findLowersAndHighers();
             if (!findSwingType())
                 PatternType = PatternType.Unknown;
