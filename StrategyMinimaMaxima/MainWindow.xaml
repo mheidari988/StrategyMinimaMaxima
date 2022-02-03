@@ -14,13 +14,14 @@
             <ColumnDefinition Width="200"/>
             <ColumnDefinition Width="200"/>
             <ColumnDefinition Width="223"/>
-            <ColumnDefinition Width="375"/>
+            <ColumnDefinition Width="194.6"/>
+            <ColumnDefinition Width="180.4"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="30"/>
             <RowDefinition/>
         </Grid.RowDefinitions>
-        <TabControl Grid.Row="1" Grid.ColumnSpan="6" >
+        <TabControl Grid.Row="1" Grid.ColumnSpan="7" >
             <TabItem Header="Chart&amp;MarketDepth">
                 <Grid Background="#FFE5E5E5">
                     <Grid.ColumnDefinitions>
@@ -54,6 +55,11 @@
             <TabItem Header="Monitor">
                 <Grid Background="#FFE5E5E5">
                     <xaml:Monitor x:Name="Monitor" />
+                </Grid>
+            </TabItem>
+            <TabItem Header="Extra">
+                <Grid Background="#FFE5E5E5">
+
                 </Grid>
             </TabItem>
         </TabControl>

@@ -17,8 +17,8 @@ namespace StrategyMinimaMaxima
     {
         private readonly CandleSeries _h1CandleSeries;
         private readonly CandleSeries _15mCandleSeries;
-        private readonly PriceActionManager manager1h = new PriceActionManager();
-        private readonly PriceActionManager manager15m = new PriceActionManager();
+        private readonly PriceActionContainer manager1h = new PriceActionContainer();
+        private readonly PriceActionContainer manager15m = new PriceActionContainer();
         private PriceActionProcessor processor = new PriceActionProcessor();
 
         public FirstStrategy(CandleSeries _h1CandleSeries, CandleSeries _15mCandleSeries, long processLimit = 0)
@@ -44,8 +44,7 @@ namespace StrategyMinimaMaxima
                 if (candle.State == CandleStates.Finished)
                 {
                     manager15m.AddCandle(candle);
-                    manager15m.WriteLocalLog("_FirstStrategy_15m_Log.txt");
-                    processor.ChildManager = manager15m;
+                    processor.ChildContainer = manager15m;
                 }
             }
             if (((TimeFrameCandle)candle).TimeFrame == TimeSpan.FromMinutes(60))
@@ -53,8 +52,7 @@ namespace StrategyMinimaMaxima
                 if (candle.State == CandleStates.Finished)
                 {
                     manager1h.AddCandle(candle);
-                    manager1h.WriteLocalLog("_FirstStrategy_1h_Log.txt");
-                    processor.ParrentManager = manager1h;
+                    processor.ParrentContainer = manager1h;
                 }
             }
             if (manager1h.Swings.Count > 0)

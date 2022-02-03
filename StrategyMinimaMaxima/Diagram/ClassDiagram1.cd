@@ -14,11 +14,11 @@
       <FileName>PriceAction\PriceActionSwing.cs</FileName>
     </TypeIdentifier>
   </Class>
-  <Class Name="StrategyMinimaMaxima.PriceAction.PriceActionManager">
+  <Class Name="StrategyMinimaMaxima.PriceAction.PriceActionCanvas">
     <Position X="11.5" Y="0.5" Width="2.75" />
     <TypeIdentifier>
-      <HashCode>IEAIAAAAYAIAAAAAgAAQAAIAAAAABAAAQAAAICAACIA=</HashCode>
-      <FileName>PriceAction\PriceActionManager.cs</FileName>
+      <HashCode>IEAAAAAAYAIAAAAAAAAQAAIgAAAAAAAAQAAAICAAAIA=</HashCode>
+      <FileName>PriceAction\PriceActionCanvas.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="StrategyMinimaMaxima.PriceAction.PriceActionElement">
@@ -43,10 +43,24 @@
     </TypeIdentifier>
   </Class>
   <Class Name="StrategyMinimaMaxima.PriceAction.PriceActionProcessor">
-    <Position X="5.25" Y="4" Width="3.5" />
+    <Position X="5.25" Y="7.25" Width="3.5" />
     <TypeIdentifier>
-      <HashCode>AABYCAAAAAAABAAAABAAAAAAgAADAAAAABAgAAAgAAA=</HashCode>
+      <HashCode>AABYCAAAAAAABAAAABAAAAAAgAACAAAAABAgAACgAAA=</HashCode>
       <FileName>PriceAction\PriceActionProcessor.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="StrategyMinimaMaxima.PriceAction.PriceActionPosition">
+    <Position X="9.5" Y="7.25" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAACAAIEAAAAAAAACAAAAABAAAAABBAAAEQAAAAAAA=</HashCode>
+      <FileName>PriceAction\PriceActionPosition.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="StrategyMinimaMaxima.PriceAction.LogHelper">
+    <Position X="19.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ABAAAAAAAAAAAAAAAAAAKAABEAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>PriceAction\LogHelper.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Enum Name="StrategyMinimaMaxima.PriceAction.MomentumType">

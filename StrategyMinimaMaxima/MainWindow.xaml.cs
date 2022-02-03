@@ -17,6 +17,7 @@ using StockSharp.Xaml;
 using StockSharp.Xaml.Charting;
 using System.Collections.Generic;
 using StockSharp.Algo;
+using StrategyMinimaMaxima.PriceAction;
 
 namespace StrategyMinimaMaxima
 {
@@ -37,7 +38,9 @@ namespace StrategyMinimaMaxima
         private Portfolio _portfolio;
         private readonly LogManager _logManager;
         private Strategy _strategy;
-        private readonly string _pathHistory = @"D:\StockSharp\StockSharpData\Storage"; //Paths.HistoryDataPath;
+        //private readonly string _pathHistory = @"D:\StockSharp\StockSharpData\Storage";
+        private readonly string _pathHistory = @"C:\Storage";
+
         private ChartBandElement _pnl;
         private ChartBandElement _unrealizedPnL;
         private ChartBandElement _commissionCurve;
@@ -50,8 +53,8 @@ namespace StrategyMinimaMaxima
             _logManager.Listeners.Add(new FileLogListener("log.txt"));
             _logManager.Listeners.Add(new GuiLogListener(Monitor));
 
-            DatePickerBegin.SelectedDate = new DateTime(2021, 11, 18);
-            DatePickerEnd.SelectedDate = new DateTime(2021, 11, 19);
+            DatePickerBegin.SelectedDate = new DateTime(2021, 1, 4);
+            DatePickerEnd.SelectedDate = new DateTime(2021, 1, 5);
 
             CandleSettingsEditor.Settings = new CandleSeries
             {
@@ -95,19 +98,19 @@ namespace StrategyMinimaMaxima
             //.................add connector to the log manager...................
             _logManager.Sources.Add(_connector);
 
-            _candleSeries_1m = new CandleSeries(typeof(TimeFrameCandle), _security, TimeSpan.FromMinutes(1))
-            {
-                BuildCandlesMode = MarketDataBuildModes.LoadAndBuild
-            };
+            //_candleSeries_1m = new CandleSeries(typeof(TimeFrameCandle), _security, TimeSpan.FromMinutes(1))
+            //{
+            //    BuildCandlesMode = MarketDataBuildModes.Load
+            //};
 
             _candleSeries_15m = new CandleSeries(typeof(TimeFrameCandle), _security, TimeSpan.FromMinutes(15))
             {
-                BuildCandlesMode = MarketDataBuildModes.LoadAndBuild
+                BuildCandlesMode = MarketDataBuildModes.Load
             };
 
             _candleSeries_1h = new CandleSeries(typeof(TimeFrameCandle), _security, TimeSpan.FromMinutes(60))
             {
-                BuildCandlesMode = MarketDataBuildModes.LoadAndBuild
+                BuildCandlesMode = MarketDataBuildModes.Load
             };
 
             //.................initialize chart...................
@@ -121,21 +124,7 @@ namespace StrategyMinimaMaxima
             _connector.NewOrder += OrderGrid.Orders.Add;
             _connector.OrderRegisterFailed += OrderGrid.AddRegistrationFail;
 
-            //_strategy = new FirstStrategy(_candleSeries_1h, _candleSeries_15m, long.Parse(txtProcessLimit.Text))
-            //{
-            //    Security = _security,
-            //    Connector = _connector,
-            //    Portfolio = _portfolio,
-            //};
-
-            //_strategy = new StopLossTakeProfitStrategy(_candleSeries_1h, _candleSeries_15m, _candleSeries_1m, long.Parse(txtProcessLimit.Text))
-            //{
-            //    Security = _security,
-            //    Connector = _connector,
-            //    Portfolio = _portfolio,
-            //};
-
-            _strategy = new MomentumStrategy(_candleSeries_1h, _candleSeries_15m, _candleSeries_1m, long.Parse(txtProcessLimit.Text))
+            _strategy = new ICIStrategy(_candleSeries_1h, _candleSeries_15m, long.Parse(txtProcessLimit.Text))
             {
                 Security = _security,
                 Connector = _connector,
@@ -201,7 +190,7 @@ namespace StrategyMinimaMaxima
 
         private void Connector_CandleSeriesProcessing(CandleSeries candleSeries, Candle candle)
         {
-            if (((TimeFrameCandle)candle).TimeFrame == TimeSpan.FromMinutes(15))
+            if (((TimeFrameCandle)candle).TimeFrame == TimeSpan.FromMinutes(60))
             {
                 Chart.Draw(_candleElement, candle);
             }

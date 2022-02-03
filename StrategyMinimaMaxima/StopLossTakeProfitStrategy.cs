@@ -21,8 +21,8 @@ namespace StrategyMinimaMaxima
         private readonly CandleSeries ParrentCandleSeries;
         private readonly CandleSeries ChildCandleSeries;
         private readonly CandleSeries OneMinSeries;
-        private readonly PriceActionManager ParrentManager = new PriceActionManager();
-        private readonly PriceActionManager ChildManager = new PriceActionManager();
+        private readonly PriceActionContainer ParrentManager = new PriceActionContainer();
+        private readonly PriceActionContainer ChildManager = new PriceActionContainer();
         private PriceActionProcessor processor = new PriceActionProcessor();
 
         private bool parrentReadyToSell = false;
@@ -80,7 +80,7 @@ namespace StrategyMinimaMaxima
                 if (candle.State == CandleStates.Finished)
                 {
                     ChildManager.AddCandle(candle);
-                    processor.ChildManager = ChildManager;
+                    processor.ChildContainer = ChildManager;
                 }
             }
             
@@ -91,7 +91,7 @@ namespace StrategyMinimaMaxima
                 if (candle.State == CandleStates.Finished)
                 {
                     ParrentManager.AddCandle(candle);
-                    processor.ParrentManager = ParrentManager;
+                    processor.ParrentContainer = ParrentManager;
                 }
             }
 
@@ -101,11 +101,11 @@ namespace StrategyMinimaMaxima
 
         protected void NewOderTrade(MyTrade myTrade)
         {
-            var takeProfit = new TakeProfitStrategy(myTrade, 500)
+            var takeProfit = new TakeProfitStrategy(myTrade, 1000)
             {
                 WaitAllTrades = true,
             };
-            var stopLoss = new StopLossStrategy(myTrade, 500)
+            var stopLoss = new StopLossStrategy(myTrade, 1000)
             {
                 WaitAllTrades = true,
             };
