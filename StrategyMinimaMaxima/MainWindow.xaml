@@ -68,7 +68,7 @@
 
         <DatePicker Grid.Row="0" Grid.Column="1" x:Name="DatePickerBegin"/>
         <DatePicker x:Name="DatePickerEnd" Grid.Row="0" Grid.Column="2"/>
-        <TextBox Grid.Column="3" Name="txtProcessLimit" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Center" Width="185" Height="18"/>
+        <TextBox Grid.Column="3" Name="txtProcessLimit" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="-1" VerticalAlignment="Center" Width="185" Height="18"/>
         <Button Name="btnOpenMainWin" Grid.Column="5" Content="Open Main" Click="btnOpenMainClicked" HorizontalAlignment="Left" VerticalAlignment="Center" Width="174" Height="30"/>
 
 

@@ -19,16 +19,16 @@ namespace StrategyMinimaMaxima.PriceAction
         public CandleSeries ParrentCandleSeries { get; private set; }
         public CandleSeries ChildCandleSeries { get; private set; }
 
-        private readonly PriceActionContainer ParrentManager = new PriceActionContainer();
-        private readonly PriceActionContainer ChildManager = new PriceActionContainer();
+        private readonly PriceActionContainer ParrentContainer = new PriceActionContainer();
+        private readonly PriceActionContainer ChildContainer = new PriceActionContainer();
         private PriceActionProcessor processor = new PriceActionProcessor();
 
         public ICIStrategy(CandleSeries parrentCandleSeries, CandleSeries childCandleSeries, long processLimit = 0)
         {
             ParrentCandleSeries = parrentCandleSeries;
             ChildCandleSeries = childCandleSeries;
-            ParrentManager.ProcessLimit = processLimit;
-            ChildManager.ProcessLimit = processLimit * 4;
+            ParrentContainer.ProcessLimit = processLimit;
+            ChildContainer.ProcessLimit = processLimit * 4;
         }
 
         protected override void OnStarted()
@@ -50,10 +50,9 @@ namespace StrategyMinimaMaxima.PriceAction
             {
                 if (candle.State == CandleStates.Finished)
                 {
-                    ParrentManager.AddCandle(candle);
-                    processor.ParrentContainer = ParrentManager;
-                    LogHelper.WriteCandleList(ParrentManager.Candles, "_parrentCandles.txt");
-                    
+                    ParrentContainer.AddCandle(candle);
+                    processor.ParrentContainer = ParrentContainer;
+                    LogHelper.WriteCandleList(ParrentContainer.Candles, "_parrentCandles.txt");
                 }
             }
 
@@ -64,13 +63,13 @@ namespace StrategyMinimaMaxima.PriceAction
             {
                 if (candle.State == CandleStates.Finished)
                 {
-                    ChildManager.AddCandle(candle);
-                    processor.ChildContainer = ChildManager;
-                    LogHelper.WriteCandleList(ChildManager.Candles, "_childCandles.txt");
+                    ChildContainer.AddCandle(candle);
+                    processor.ChildContainer = ChildContainer;
+                    LogHelper.WriteCandleList(ChildContainer.Candles, "_childCandles.txt");
 
-                    if (ParrentManager.Swings.Count > 0)
+                    if (ParrentContainer.Swings.Count > 0)
                     {
-                        LogHelper.WriteSwingList(ParrentManager.Swings.Values.ToList(), "_ParrentSwings.txt");
+                        LogHelper.WriteSwingList(ParrentContainer.Swings.Values.ToList(), "_ParrentSwings.txt");
                         LogHelper.WriteSwingList(processor.GetChildSwingsOfLastParrent(LegStatus.Leg1), "_Leg1.txt");
                         LogHelper.WriteSwingList(processor.GetChildSwingsOfLastParrent(LegStatus.Leg2), "_Leg2.txt");
                         LogHelper.WriteSwingList(processor.GetChildSwingsOfLastParrent(LegStatus.Leg3), "_Leg3.txt");
