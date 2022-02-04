@@ -45,7 +45,7 @@ namespace StrategyMinimaMaxima.PriceAction
 
         #region Public Methods
 
-        public List<PriceActionSwing> GetChildSwingsOfLastParrent(LegStatus fromLeg, bool nonStop = false)
+        public List<PriceActionSwing>? GetChildSwingsOfLastParrent(LegStatus fromLeg, bool nonStop = false)
         {
             var result = ParrentContainer.Swings.LastOrDefault().Value;
 
@@ -65,29 +65,42 @@ namespace StrategyMinimaMaxima.PriceAction
                             decimal pLow = result.Leg1.BeginElement.Candle.LowPrice;
                             decimal pHigh = result.Leg1.EndElement.Candle.HighPrice;
 
-                            var cStartSeq = (from child in ChildContainer.Candles
-                                             where child.LowPrice == pLow
-                                             select child.SeqNum).LastOrDefault();
-                            var cEndSeq = (from child in ChildContainer.Candles
-                                           where child.HighPrice == pHigh
-                                           select child.SeqNum).LastOrDefault();
+                            try
+                            {
+                                var cStartSeq = (from child in ChildContainer.Candles
+                                                 where child.LowPrice == pLow
+                                                 select child.SeqNum).LastOrDefault();
+                                var cEndSeq = (from child in ChildContainer.Candles
+                                               where child.HighPrice == pHigh
+                                               select child.SeqNum).LastOrDefault();
 
-                            return generateChildList(nonStop, cStartSeq, cEndSeq);
-
+                                return generateChildList(nonStop, cStartSeq, cEndSeq);
+                            }
+                            catch (InvalidOperationException)
+                            {
+                                return null;
+                            }
                         }
                         else if (result.Leg1.MomentumType == MomentumType.Bearish)
                         {
                             decimal pLow = result.Leg1.BeginElement.Candle.HighPrice;
                             decimal pHigh = result.Leg1.EndElement.Candle.LowPrice;
 
-                            var cStartSeq = (from child in ChildContainer.Candles
-                                             where child.HighPrice == pHigh
-                                             select child.SeqNum).LastOrDefault();
-                            var cEndSeq = (from child in ChildContainer.Candles
-                                           where child.LowPrice == pLow
-                                           select child.SeqNum).LastOrDefault();
+                            try
+                            {
+                                var cStartSeq = (from child in ChildContainer.Candles
+                                                 where child.HighPrice == pHigh
+                                                 select child.SeqNum).LastOrDefault();
+                                var cEndSeq = (from child in ChildContainer.Candles
+                                               where child.LowPrice == pLow
+                                               select child.SeqNum).LastOrDefault();
 
-                            return generateChildList(nonStop, cStartSeq, cEndSeq);
+                                return generateChildList(nonStop, cStartSeq, cEndSeq);
+                            }
+                            catch (InvalidOperationException)
+                            {
+                                return null;
+                            }
                         }
                         else
                         {
@@ -104,29 +117,42 @@ namespace StrategyMinimaMaxima.PriceAction
                             decimal pLow = result.Leg2.BeginElement.Candle.LowPrice;
                             decimal pHigh = result.Leg2.EndElement.Candle.HighPrice;
 
-                            var cStartSeq = (from child in ChildContainer.Candles
-                                             where child.LowPrice == pLow
-                                             select child.SeqNum).LastOrDefault();
-                            var cEndSeq = (from child in ChildContainer.Candles
-                                           where child.HighPrice == pHigh
-                                           select child.SeqNum).LastOrDefault();
+                            try
+                            {
+                                var cStartSeq = (from child in ChildContainer.Candles
+                                                 where child.LowPrice == pLow
+                                                 select child.SeqNum).LastOrDefault();
+                                var cEndSeq = (from child in ChildContainer.Candles
+                                               where child.HighPrice == pHigh
+                                               select child.SeqNum).LastOrDefault();
 
-                            return generateChildList(nonStop, cStartSeq, cEndSeq);
-
+                                return generateChildList(nonStop, cStartSeq, cEndSeq);
+                            }
+                            catch (InvalidOperationException)
+                            {
+                                return null;
+                            }
                         }
                         else if (result.Leg2.MomentumType == MomentumType.Bearish)
                         {
                             decimal pHigh = result.Leg2.BeginElement.Candle.HighPrice;
                             decimal pLow = result.Leg2.EndElement.Candle.LowPrice;
 
-                            var cStartSeq = (from child in ChildContainer.Candles
-                                             where child.HighPrice == pHigh
-                                             select child.SeqNum).LastOrDefault();
-                            var cEndSeq = (from child in ChildContainer.Candles
-                                           where child.LowPrice == pLow
-                                           select child.SeqNum).LastOrDefault();
+                            try
+                            {
+                                var cStartSeq = (from child in ChildContainer.Candles
+                                                 where child.HighPrice == pHigh
+                                                 select child.SeqNum).LastOrDefault();
+                                var cEndSeq = (from child in ChildContainer.Candles
+                                               where child.LowPrice == pLow
+                                               select child.SeqNum).LastOrDefault();
 
-                            return generateChildList(nonStop, cStartSeq, cEndSeq);
+                                return generateChildList(nonStop, cStartSeq, cEndSeq);
+                            }
+                            catch (InvalidOperationException)
+                            {
+                                return null;
+                            }
                         }
                         else
                         {
@@ -143,29 +169,44 @@ namespace StrategyMinimaMaxima.PriceAction
                             decimal pLow = result.Leg3.BeginElement.Candle.LowPrice;
                             decimal pHigh = result.Leg3.EndElement.Candle.HighPrice;
 
-                            var cStartSeq = (from child in ChildContainer.Candles
-                                             where child.LowPrice == pLow
-                                             select child.SeqNum).LastOrDefault();
-                            var cEndSeq = (from child in ChildContainer.Candles
-                                           where child.HighPrice == pHigh
-                                           select child.SeqNum).LastOrDefault();
+                            try
+                            {
+                                var cStartSeq = (from child in ChildContainer.Candles
+                                                 where child.LowPrice == pLow
+                                                 select child.SeqNum).Last();
+                                var cEndSeq = (from child in ChildContainer.Candles
+                                               where child.HighPrice == pHigh
+                                               select child.SeqNum).Last();
 
-                            return generateChildList(nonStop, cStartSeq, cEndSeq);
-
+                                return generateChildList(nonStop, cStartSeq, cEndSeq);
+                            }
+                            catch (InvalidOperationException)
+                            {
+                                // This is because Start or End SeqNum not found
+                                return null;
+                            }
                         }
                         else if (result.Leg3.MomentumType == MomentumType.Bearish)
                         {
                             decimal pHigh = result.Leg3.BeginElement.Candle.HighPrice;
                             decimal pLow = result.Leg3.EndElement.Candle.LowPrice;
 
-                            var cStartSeq = (from child in ChildContainer.Candles
-                                             where child.HighPrice == pHigh
-                                             select child.SeqNum).LastOrDefault();
-                            var cEndSeq = (from child in ChildContainer.Candles
-                                           where child.LowPrice == pLow
-                                           select child.SeqNum).LastOrDefault();
+                            try
+                            {
+                                var cStartSeq = (from child in ChildContainer.Candles
+                                                 where child.HighPrice == pHigh
+                                                 select child.SeqNum).Last();
+                                var cEndSeq = (from child in ChildContainer.Candles
+                                               where child.LowPrice == pLow
+                                               select child.SeqNum).Last();
 
-                            return generateChildList(nonStop, cStartSeq, cEndSeq);
+                                return generateChildList(nonStop, cStartSeq, cEndSeq);
+                            }
+                            catch (InvalidOperationException)
+                            {
+                                // This is because Start or End SeqNum not found
+                                return null!; 
+                            }
                         }
                         else
                         {

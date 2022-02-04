@@ -10,7 +10,7 @@ namespace StrategyMinimaMaxima.PriceAction
 {
     public static class LogHelper
     {
-        public static bool WriteSwingList(List<PriceActionSwing> swings, string filePath)
+        public static bool WriteSwingList(List<PriceActionSwing>? swings, string filePath)
         {
             if (swings != null && swings.Count > 0)
             {
@@ -79,7 +79,8 @@ namespace StrategyMinimaMaxima.PriceAction
                 str.AppendLine("--------- Candles info ---------");
                 foreach (var item in candle)
                 {
-                    str.AppendLine($"SeqNo {item.SeqNum} -- Type: -- Values: Open:{item.OpenPrice} ," +
+                    str.AppendLine($"SeqNo {item.SeqNum} -- Time:{new DateTime(item.OpenTime.Ticks).ToShortTimeString()}" +
+                        $" -- Values: Open:{item.OpenPrice} ," +
                         $" Close:{item.ClosePrice} High:{item.HighPrice} Low:{item.LowPrice}");
                 }
                 File.WriteAllText(filePath, str.ToString());
