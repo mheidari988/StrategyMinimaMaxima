@@ -45,7 +45,7 @@ namespace StrategyMinimaMaxima.PriceAction
 
         #region Public Methods
 
-        public List<PriceActionSwing> GetChildSwingsOfLastParrent(LegStatus fromLeg, bool singleLeg = true)
+        public List<PriceActionSwing> GetChildSwingsOfLastParrent(LegStatus fromLeg, bool nonStop = false)
         {
             var result = ParrentContainer.Swings.LastOrDefault().Value;
 
@@ -72,7 +72,7 @@ namespace StrategyMinimaMaxima.PriceAction
                                            where child.HighPrice == pHigh
                                            select child.SeqNum).LastOrDefault();
 
-                            return generateChildList(singleLeg, cStartSeq, cEndSeq);
+                            return generateChildList(nonStop, cStartSeq, cEndSeq);
 
                         }
                         else if (result.Leg1.MomentumType == MomentumType.Bearish)
@@ -87,7 +87,7 @@ namespace StrategyMinimaMaxima.PriceAction
                                            where child.LowPrice == pLow
                                            select child.SeqNum).LastOrDefault();
 
-                            return generateChildList(singleLeg, cStartSeq, cEndSeq);
+                            return generateChildList(nonStop, cStartSeq, cEndSeq);
                         }
                         else
                         {
@@ -111,13 +111,13 @@ namespace StrategyMinimaMaxima.PriceAction
                                            where child.HighPrice == pHigh
                                            select child.SeqNum).LastOrDefault();
 
-                            return generateChildList(singleLeg, cStartSeq, cEndSeq);
+                            return generateChildList(nonStop, cStartSeq, cEndSeq);
 
                         }
                         else if (result.Leg2.MomentumType == MomentumType.Bearish)
                         {
-                            decimal pLow = result.Leg2.BeginElement.Candle.HighPrice;
-                            decimal pHigh = result.Leg2.EndElement.Candle.LowPrice;
+                            decimal pHigh = result.Leg2.BeginElement.Candle.HighPrice;
+                            decimal pLow = result.Leg2.EndElement.Candle.LowPrice;
 
                             var cStartSeq = (from child in ChildContainer.Candles
                                              where child.HighPrice == pHigh
@@ -126,7 +126,7 @@ namespace StrategyMinimaMaxima.PriceAction
                                            where child.LowPrice == pLow
                                            select child.SeqNum).LastOrDefault();
 
-                            return generateChildList(singleLeg, cStartSeq, cEndSeq);
+                            return generateChildList(nonStop, cStartSeq, cEndSeq);
                         }
                         else
                         {
@@ -150,13 +150,13 @@ namespace StrategyMinimaMaxima.PriceAction
                                            where child.HighPrice == pHigh
                                            select child.SeqNum).LastOrDefault();
 
-                            return generateChildList(singleLeg, cStartSeq, cEndSeq);
+                            return generateChildList(nonStop, cStartSeq, cEndSeq);
 
                         }
                         else if (result.Leg3.MomentumType == MomentumType.Bearish)
                         {
-                            decimal pLow = result.Leg3.BeginElement.Candle.HighPrice;
-                            decimal pHigh = result.Leg3.EndElement.Candle.LowPrice;
+                            decimal pHigh = result.Leg3.BeginElement.Candle.HighPrice;
+                            decimal pLow = result.Leg3.EndElement.Candle.LowPrice;
 
                             var cStartSeq = (from child in ChildContainer.Candles
                                              where child.HighPrice == pHigh
@@ -165,11 +165,11 @@ namespace StrategyMinimaMaxima.PriceAction
                                            where child.LowPrice == pLow
                                            select child.SeqNum).LastOrDefault();
 
-                            return generateChildList(singleLeg, cStartSeq, cEndSeq);
+                            return generateChildList(nonStop, cStartSeq, cEndSeq);
                         }
                         else
                         {
-                            throw new ArgumentException($"LegMomentum: {result.Leg1.MomentumType} is not valid");
+                            throw new ArgumentException($"LegMomentum: {result.Leg3.MomentumType} is not valid");
                         }
                     default:
                         break;
@@ -179,9 +179,9 @@ namespace StrategyMinimaMaxima.PriceAction
             return null!; 
         }
 
-        private List<PriceActionSwing> generateChildList(bool singleLeg, long cStartSeq, long cEndSeq)
+        private List<PriceActionSwing> generateChildList(bool nonStop, long cStartSeq, long cEndSeq)
         {
-            if (singleLeg)
+            if (!nonStop)
             {
                 var childCandles = ChildContainer.Candles.Where(c => c.SeqNum >= cStartSeq && c.SeqNum <= cEndSeq).ToList();
                 return PriceActionContainer.GenerateContainer(childCandles).Swings.Values.ToList();

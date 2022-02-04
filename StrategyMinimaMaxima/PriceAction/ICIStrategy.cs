@@ -52,7 +52,8 @@ namespace StrategyMinimaMaxima.PriceAction
                 {
                     ParrentManager.AddCandle(candle);
                     processor.ParrentContainer = ParrentManager;
-                    LogHelper.WriteCandleList(ParrentManager.Candles, "_ParrentCandles.txt");
+                    LogHelper.WriteCandleList(ParrentManager.Candles, "_parrentCandles.txt");
+                    
                 }
             }
 
@@ -65,17 +66,15 @@ namespace StrategyMinimaMaxima.PriceAction
                 {
                     ChildManager.AddCandle(candle);
                     processor.ChildContainer = ChildManager;
-                    LogHelper.WriteCandleList(ChildManager.Candles, "_ChildCandles.txt");
-
-                    if (ChildManager.Swings.Count > 0)
-                    {
-                        LogHelper.WriteSwingList(ChildManager.Swings.Values.ToList(), "_ChildSwings.txt");
-                    }
+                    LogHelper.WriteCandleList(ChildManager.Candles, "_childCandles.txt");
 
                     if (ParrentManager.Swings.Count > 0)
                     {
                         LogHelper.WriteSwingList(ParrentManager.Swings.Values.ToList(), "_ParrentSwings.txt");
-                        LogHelper.WriteSwingList(processor.GetChildSwingsOfLastParrent(LegStatus.Leg2), "_GetChildSwingsFromLastParrentSwing.txt");
+                        LogHelper.WriteSwingList(processor.GetChildSwingsOfLastParrent(LegStatus.Leg1), "_Leg1.txt");
+                        LogHelper.WriteSwingList(processor.GetChildSwingsOfLastParrent(LegStatus.Leg2), "_Leg2.txt");
+                        LogHelper.WriteSwingList(processor.GetChildSwingsOfLastParrent(LegStatus.Leg3), "_Leg3.txt");
+                        LogHelper.WriteSwingList(processor.GetChildSwingsOfLastParrent(LegStatus.Leg3, true), "_Leg3_nonStop.txt");
                     }
                 }
             }

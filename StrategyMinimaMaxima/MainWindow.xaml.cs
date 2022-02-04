@@ -53,8 +53,8 @@ namespace StrategyMinimaMaxima
             _logManager.Listeners.Add(new FileLogListener("log.txt"));
             _logManager.Listeners.Add(new GuiLogListener(Monitor));
 
-            DatePickerBegin.SelectedDate = new DateTime(2021, 1, 4);
-            DatePickerEnd.SelectedDate = new DateTime(2021, 1, 5);
+            DatePickerBegin.SelectedDate = new DateTime(2021, 1, 6);
+            DatePickerEnd.SelectedDate = new DateTime(2021, 1, 7);
 
             CandleSettingsEditor.Settings = new CandleSeries
             {
@@ -124,7 +124,7 @@ namespace StrategyMinimaMaxima
             _connector.NewOrder += OrderGrid.Orders.Add;
             _connector.OrderRegisterFailed += OrderGrid.AddRegistrationFail;
 
-            _strategy = new ICIStrategy(_candleSeries_1h, _candleSeries_15m, long.Parse(txtProcessLimit.Text))
+            _strategy = new ICIStrategy(_candleSeries_1h, _candleSeries_15m, long.Parse(txtProcessLimit.Text) + 1) // +1 is for TradingView
             {
                 Security = _security,
                 Connector = _connector,
