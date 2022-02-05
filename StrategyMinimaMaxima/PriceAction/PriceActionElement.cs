@@ -6,14 +6,14 @@ namespace StrategyMinimaMaxima.PriceAction
     {
         public PriceActionElement(Candle _candle)
         {
-            Candle = _candle;
+            Candle = _candle ?? throw new System.ArgumentNullException(nameof(_candle));
         }
 
         public CandleMomentumType CandleMomentum
         {
             get
             {
-                if (Candle.OpenPrice < Candle.ClosePrice)
+                if (Candle!.OpenPrice < Candle.ClosePrice)
                     return CandleMomentumType.Bullish;
                 else
                     return CandleMomentumType.Bearish;
@@ -21,7 +21,7 @@ namespace StrategyMinimaMaxima.PriceAction
         }
         public MomentumType MomentumType { get; set; }
 
-        public PeakValleyStatus PeakValleyStatus { get; set; }
+        public HighLowType PeakValleyStatus { get; set; }
 
         public PeakValleyType PeakValleyType { get; set; }
 
@@ -29,7 +29,7 @@ namespace StrategyMinimaMaxima.PriceAction
 
         public override string ToString()
         {
-            return $"SeqNum:{Candle.SeqNum}{System.Environment.NewLine}Open Time:{Candle.OpenTime}{System.Environment.NewLine}" +
+            return $"SeqNum:{Candle!.SeqNum}{System.Environment.NewLine}Open Time:{Candle.OpenTime}{System.Environment.NewLine}" +
                 $"Open: {Candle.OpenPrice} - Close:{Candle.ClosePrice} - High:{Candle.HighPrice} - Low:{Candle.LowPrice}{System.Environment.NewLine}" +
                 $"Momentum:{CandleMomentum} - PeakValleyType:{PeakValleyType} - PeakValleyStatus:{PeakValleyStatus}";
         }
