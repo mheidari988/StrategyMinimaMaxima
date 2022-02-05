@@ -52,9 +52,8 @@ namespace StrategyMinimaMaxima
             _logManager = new LogManager();
             _logManager.Listeners.Add(new FileLogListener("log.txt"));
             _logManager.Listeners.Add(new GuiLogListener(Monitor));
-
-            DatePickerBegin.SelectedDate = new DateTime(2021, 1, 6);
-            DatePickerEnd.SelectedDate = new DateTime(2021, 1, 7);
+            DatePickerBegin.SelectedDate = new DateTime(2021, 1, 1);
+            DatePickerEnd.SelectedDate = new DateTime(2021, 1, 2);
 
             CandleSettingsEditor.Settings = new CandleSeries
             {
