@@ -69,10 +69,10 @@ namespace StrategyMinimaMaxima.PriceAction
                             {
                                 var cStartSeq = (from child in ChildContainer.Candles
                                                  where child.LowPrice == pLow
-                                                 select child.SeqNum).LastOrDefault();
+                                                 select child.SeqNum).Last();
                                 var cEndSeq = (from child in ChildContainer.Candles
                                                where child.HighPrice == pHigh
-                                               select child.SeqNum).LastOrDefault();
+                                               select child.SeqNum).Last();
 
                                 return generateChildList(nonStop, cStartSeq, cEndSeq);
                             }
@@ -83,17 +83,17 @@ namespace StrategyMinimaMaxima.PriceAction
                         }
                         else if (result.Leg1.MomentumType == MomentumType.Bearish)
                         {
-                            decimal pLow = result.Leg1.BeginElement.Candle.HighPrice;
-                            decimal pHigh = result.Leg1.EndElement.Candle.LowPrice;
+                            decimal pHigh = result.Leg1.BeginElement.Candle.HighPrice;
+                            decimal pLow = result.Leg1.EndElement.Candle.LowPrice;
 
                             try
                             {
                                 var cStartSeq = (from child in ChildContainer.Candles
                                                  where child.HighPrice == pHigh
-                                                 select child.SeqNum).LastOrDefault();
+                                                 select child.SeqNum).Last();
                                 var cEndSeq = (from child in ChildContainer.Candles
                                                where child.LowPrice == pLow
-                                               select child.SeqNum).LastOrDefault();
+                                               select child.SeqNum).Last();
 
                                 return generateChildList(nonStop, cStartSeq, cEndSeq);
                             }
@@ -121,10 +121,10 @@ namespace StrategyMinimaMaxima.PriceAction
                             {
                                 var cStartSeq = (from child in ChildContainer.Candles
                                                  where child.LowPrice == pLow
-                                                 select child.SeqNum).LastOrDefault();
+                                                 select child.SeqNum).Last();
                                 var cEndSeq = (from child in ChildContainer.Candles
                                                where child.HighPrice == pHigh
-                                               select child.SeqNum).LastOrDefault();
+                                               select child.SeqNum).Last();
 
                                 return generateChildList(nonStop, cStartSeq, cEndSeq);
                             }
@@ -142,10 +142,10 @@ namespace StrategyMinimaMaxima.PriceAction
                             {
                                 var cStartSeq = (from child in ChildContainer.Candles
                                                  where child.HighPrice == pHigh
-                                                 select child.SeqNum).LastOrDefault();
+                                                 select child.SeqNum).Last();
                                 var cEndSeq = (from child in ChildContainer.Candles
                                                where child.LowPrice == pLow
-                                               select child.SeqNum).LastOrDefault();
+                                               select child.SeqNum).Last();
 
                                 return generateChildList(nonStop, cStartSeq, cEndSeq);
                             }
