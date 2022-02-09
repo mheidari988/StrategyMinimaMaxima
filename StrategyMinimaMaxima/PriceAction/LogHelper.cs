@@ -25,8 +25,8 @@ namespace StrategyMinimaMaxima.PriceAction
                     str.AppendLine("######################################################################");
                     str.AppendLine(
                         $" PatternType: {item.PatternType}" +
-                        $" -- Impulse: {PriceActionHelper.GetImpulseType(item)} " +
-                        $" -- Correction: {PriceActionHelper.GetCorrectionType(item)} ");
+                        $" -- Impulse: {PriceActionSwing.GetImpulseType(item)} " +
+                        $" -- Correction: {PriceActionSwing.GetCorrectionType(item)} ");
                     str.AppendLine("######################################################################");
                     str.AppendLine();
                     str.AppendLine($"**Leg1 Begin Element: {item.Leg1.BeginElement}{System.Environment.NewLine}" +
@@ -60,8 +60,8 @@ namespace StrategyMinimaMaxima.PriceAction
                     str.AppendLine("######################################################################");
                     str.AppendLine(
                         $" -- PatternType: {item.PatternType}" +
-                        $" -- Impulse: {PriceActionHelper.GetImpulseType(item)} " +
-                        $" -- Correction: {PriceActionHelper.GetCorrectionType(item)} ");
+                        $" -- Impulse: {PriceActionSwing.GetImpulseType(item)} " +
+                        $" -- Correction: {PriceActionSwing.GetCorrectionType(item)} ");
                     str.AppendLine("######################################################################");
                     str.AppendLine();
                     str.AppendLine($"**Leg1 Begin Element: {item.Leg1.BeginElement}{System.Environment.NewLine}" +
@@ -87,8 +87,8 @@ namespace StrategyMinimaMaxima.PriceAction
                 str.AppendLine("######################################################################");
                 str.AppendLine(
                     $" -- PatternType: {swing.PatternType}" +
-                    $" -- Impulse: {PriceActionHelper.GetImpulseType(swing)} " +
-                    $" -- Correction: {PriceActionHelper.GetCorrectionType(swing)} ");
+                    $" -- Impulse: {PriceActionSwing.GetImpulseType(swing)} " +
+                    $" -- Correction: {PriceActionSwing.GetCorrectionType(swing)} ");
                 str.AppendLine("######################################################################");
                 str.AppendLine();
                 str.AppendLine($"**Leg1 Begin Element: {swing.Leg1.BeginElement}{System.Environment.NewLine}" +
