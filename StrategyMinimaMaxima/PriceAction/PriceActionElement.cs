@@ -21,7 +21,7 @@ namespace StrategyMinimaMaxima.PriceAction
         }
         public MomentumType MomentumType { get; set; }
 
-        public HighLowType PeakValleyStatus { get; set; }
+        public HighLowType HighLowType { get; set; }
 
         public PeakValleyType PeakValleyType { get; set; }
 
@@ -31,7 +31,7 @@ namespace StrategyMinimaMaxima.PriceAction
         {
             return $"SeqNum:{Candle!.SeqNum}{System.Environment.NewLine}Open DateTime: {Candle.OpenTime.DateTime.ToString("dd-MM-yyyy @ HH:mm")}{System.Environment.NewLine}" +
                 $"Open: {Candle.OpenPrice} - Close:{Candle.ClosePrice} - High:{Candle.HighPrice} - Low:{Candle.LowPrice}{System.Environment.NewLine}" +
-                $"Momentum:{CandleMomentum} - PeakValleyType:{PeakValleyType} - PeakValleyStatus:{PeakValleyStatus}";
+                $"CandleMomentum:{CandleMomentum} - PeakValleyType:{PeakValleyType} - HighLowType:{HighLowType}";
         }
     }
 }

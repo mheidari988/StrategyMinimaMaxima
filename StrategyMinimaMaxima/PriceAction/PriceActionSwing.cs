@@ -73,96 +73,96 @@ namespace StrategyMinimaMaxima.PriceAction
                 && Leg3.EndElement.Candle.HighPrice >= Leg1.EndElement.Candle.HighPrice)
             {
                 PatternType = PatternType.BullishICI;
-                Leg1.BeginElement.PeakValleyStatus = HighLowType.LowerLow;
-                Leg1.EndElement.PeakValleyStatus = HighLowType.HigherLow;
-                Leg2.BeginElement.PeakValleyStatus = HighLowType.HigherLow;
-                Leg2.EndElement.PeakValleyStatus = HighLowType.LowerHigh;
-                Leg3.BeginElement.PeakValleyStatus = HighLowType.LowerHigh;
-                Leg3.EndElement.PeakValleyStatus = HighLowType.HigherHigh;
+                Leg1.BeginElement.HighLowType = HighLowType.LowerLow;
+                Leg1.EndElement.HighLowType = HighLowType.HigherLow;
+                Leg2.BeginElement.HighLowType = HighLowType.HigherLow;
+                Leg2.EndElement.HighLowType = HighLowType.LowerHigh;
+                Leg3.BeginElement.HighLowType = HighLowType.LowerHigh;
+                Leg3.EndElement.HighLowType = HighLowType.HigherHigh;
             }
             else if (Leg1.MomentumType == MomentumType.Bearish
                 && Leg3.BeginElement.Candle.HighPrice >= Leg1.BeginElement.Candle.HighPrice
                 && Leg3.EndElement.Candle.LowPrice >= Leg1.EndElement.Candle.LowPrice)
             {
                 PatternType = PatternType.BullishCIC;
-                Leg1.BeginElement.PeakValleyStatus = HighLowType.LowerHigh;
-                Leg1.EndElement.PeakValleyStatus = HighLowType.LowerLow;
-                Leg2.BeginElement.PeakValleyStatus = HighLowType.LowerLow;
-                Leg2.EndElement.PeakValleyStatus = HighLowType.HigherHigh;
-                Leg3.BeginElement.PeakValleyStatus = HighLowType.HigherHigh;
-                Leg3.EndElement.PeakValleyStatus = HighLowType.HigherLow;
+                Leg1.BeginElement.HighLowType = HighLowType.LowerHigh;
+                Leg1.EndElement.HighLowType = HighLowType.LowerLow;
+                Leg2.BeginElement.HighLowType = HighLowType.LowerLow;
+                Leg2.EndElement.HighLowType = HighLowType.HigherHigh;
+                Leg3.BeginElement.HighLowType = HighLowType.HigherHigh;
+                Leg3.EndElement.HighLowType = HighLowType.HigherLow;
             }
             else if (Leg1.MomentumType == MomentumType.Bullish
                 && Leg3.BeginElement.Candle.LowPrice >= Leg1.BeginElement.Candle.LowPrice
                 && Leg3.EndElement.Candle.HighPrice <= Leg1.EndElement.Candle.HighPrice)
             {
                 PatternType = PatternType.BullishICC;
-                Leg1.BeginElement.PeakValleyStatus = HighLowType.LowerLow;
-                Leg1.EndElement.PeakValleyStatus = HighLowType.HigherHigh;
-                Leg2.BeginElement.PeakValleyStatus = HighLowType.HigherHigh;
-                Leg2.EndElement.PeakValleyStatus = HighLowType.LowerHigh;
-                Leg3.BeginElement.PeakValleyStatus = HighLowType.LowerHigh;
-                Leg3.EndElement.PeakValleyStatus = HighLowType.HigherLow;
+                Leg1.BeginElement.HighLowType = HighLowType.LowerLow;
+                Leg1.EndElement.HighLowType = HighLowType.HigherHigh;
+                Leg2.BeginElement.HighLowType = HighLowType.HigherHigh;
+                Leg2.EndElement.HighLowType = HighLowType.LowerHigh;
+                Leg3.BeginElement.HighLowType = HighLowType.LowerHigh;
+                Leg3.EndElement.HighLowType = HighLowType.HigherLow;
             }
             else if (Leg1.MomentumType == MomentumType.Bullish
                 && Leg3.BeginElement.Candle.LowPrice <= Leg1.BeginElement.Candle.LowPrice
                 && Leg3.EndElement.Candle.HighPrice >= Leg1.EndElement.Candle.HighPrice)
             {
                 PatternType = PatternType.BullishCII;
-                Leg1.BeginElement.PeakValleyStatus = HighLowType.LowerHigh;
-                Leg1.EndElement.PeakValleyStatus = HighLowType.HigherLow;
-                Leg2.BeginElement.PeakValleyStatus = HighLowType.HigherLow;
-                Leg2.EndElement.PeakValleyStatus = HighLowType.LowerLow;
-                Leg3.BeginElement.PeakValleyStatus = HighLowType.LowerLow;
-                Leg3.EndElement.PeakValleyStatus = HighLowType.HigherHigh;
+                Leg1.BeginElement.HighLowType = HighLowType.LowerHigh;
+                Leg1.EndElement.HighLowType = HighLowType.HigherLow;
+                Leg2.BeginElement.HighLowType = HighLowType.HigherLow;
+                Leg2.EndElement.HighLowType = HighLowType.LowerLow;
+                Leg3.BeginElement.HighLowType = HighLowType.LowerLow;
+                Leg3.EndElement.HighLowType = HighLowType.HigherHigh;
             }
             else if (Leg1.MomentumType == MomentumType.Bearish
                 && Leg3.BeginElement.Candle.HighPrice <= Leg1.BeginElement.Candle.HighPrice
                 && Leg3.EndElement.Candle.LowPrice <= Leg1.EndElement.Candle.LowPrice)
             {
                 PatternType = PatternType.BearishICI;
-                Leg1.BeginElement.PeakValleyStatus = HighLowType.HigherHigh;
-                Leg1.EndElement.PeakValleyStatus = HighLowType.LowerHigh;
-                Leg2.BeginElement.PeakValleyStatus = HighLowType.LowerHigh;
-                Leg2.EndElement.PeakValleyStatus = HighLowType.HigherLow;
-                Leg3.BeginElement.PeakValleyStatus = HighLowType.HigherLow;
-                Leg3.EndElement.PeakValleyStatus = HighLowType.LowerLow;
+                Leg1.BeginElement.HighLowType = HighLowType.HigherHigh;
+                Leg1.EndElement.HighLowType = HighLowType.LowerHigh;
+                Leg2.BeginElement.HighLowType = HighLowType.LowerHigh;
+                Leg2.EndElement.HighLowType = HighLowType.HigherLow;
+                Leg3.BeginElement.HighLowType = HighLowType.HigherLow;
+                Leg3.EndElement.HighLowType = HighLowType.LowerLow;
             }
             else if (Leg1.MomentumType == MomentumType.Bullish
                 && Leg3.BeginElement.Candle.LowPrice <= Leg1.BeginElement.Candle.LowPrice
                 && Leg3.EndElement.Candle.HighPrice <= Leg1.EndElement.Candle.HighPrice)
             {
                 PatternType = PatternType.BearishCIC;
-                Leg1.BeginElement.PeakValleyStatus = HighLowType.LowerHigh;
-                Leg1.EndElement.PeakValleyStatus = HighLowType.HigherHigh;
-                Leg2.BeginElement.PeakValleyStatus = HighLowType.HigherHigh;
-                Leg2.EndElement.PeakValleyStatus = HighLowType.LowerLow;
-                Leg3.BeginElement.PeakValleyStatus = HighLowType.LowerLow;
-                Leg3.EndElement.PeakValleyStatus = HighLowType.HigherLow;
+                Leg1.BeginElement.HighLowType = HighLowType.LowerHigh;
+                Leg1.EndElement.HighLowType = HighLowType.HigherHigh;
+                Leg2.BeginElement.HighLowType = HighLowType.HigherHigh;
+                Leg2.EndElement.HighLowType = HighLowType.LowerLow;
+                Leg3.BeginElement.HighLowType = HighLowType.LowerLow;
+                Leg3.EndElement.HighLowType = HighLowType.HigherLow;
             }
             else if (Leg1.MomentumType == MomentumType.Bearish
                 && Leg3.BeginElement.Candle.HighPrice <= Leg1.BeginElement.Candle.HighPrice
                 && Leg3.EndElement.Candle.LowPrice >= Leg1.EndElement.Candle.LowPrice)
             {
                 PatternType = PatternType.BearishICC;
-                Leg1.BeginElement.PeakValleyStatus = HighLowType.HigherHigh;
-                Leg1.EndElement.PeakValleyStatus = HighLowType.LowerLow;
-                Leg2.BeginElement.PeakValleyStatus = HighLowType.LowerLow;
-                Leg2.EndElement.PeakValleyStatus = HighLowType.HigherLow;
-                Leg3.BeginElement.PeakValleyStatus = HighLowType.HigherLow;
-                Leg3.EndElement.PeakValleyStatus = HighLowType.LowerHigh;
+                Leg1.BeginElement.HighLowType = HighLowType.HigherHigh;
+                Leg1.EndElement.HighLowType = HighLowType.LowerLow;
+                Leg2.BeginElement.HighLowType = HighLowType.LowerLow;
+                Leg2.EndElement.HighLowType = HighLowType.HigherLow;
+                Leg3.BeginElement.HighLowType = HighLowType.HigherLow;
+                Leg3.EndElement.HighLowType = HighLowType.LowerHigh;
             }
             else if (Leg1.MomentumType == MomentumType.Bearish
                 && Leg3.BeginElement.Candle.HighPrice >= Leg1.BeginElement.Candle.HighPrice
                 && Leg3.EndElement.Candle.LowPrice <= Leg1.EndElement.Candle.LowPrice)
             {
                 PatternType = PatternType.BearishCII;
-                Leg1.BeginElement.PeakValleyStatus = HighLowType.LowerHigh;
-                Leg1.EndElement.PeakValleyStatus = HighLowType.HigherLow;
-                Leg2.BeginElement.PeakValleyStatus = HighLowType.HigherLow;
-                Leg2.EndElement.PeakValleyStatus = HighLowType.HigherHigh;
-                Leg3.BeginElement.PeakValleyStatus = HighLowType.HigherHigh;
-                Leg3.EndElement.PeakValleyStatus = HighLowType.LowerLow;
+                Leg1.BeginElement.HighLowType = HighLowType.LowerHigh;
+                Leg1.EndElement.HighLowType = HighLowType.HigherLow;
+                Leg2.BeginElement.HighLowType = HighLowType.HigherLow;
+                Leg2.EndElement.HighLowType = HighLowType.HigherHigh;
+                Leg3.BeginElement.HighLowType = HighLowType.HigherHigh;
+                Leg3.EndElement.HighLowType = HighLowType.LowerLow;
             }
             else
             {
