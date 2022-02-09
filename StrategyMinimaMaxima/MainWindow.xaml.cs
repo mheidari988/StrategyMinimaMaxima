@@ -97,11 +97,6 @@ namespace StrategyMinimaMaxima
             //.................add connector to the log manager...................
             _logManager.Sources.Add(_connector);
 
-            //_candleSeries_1m = new CandleSeries(typeof(TimeFrameCandle), _security, TimeSpan.FromMinutes(1))
-            //{
-            //    BuildCandlesMode = MarketDataBuildModes.Load
-            //};
-
             _candleSeries_15m = new CandleSeries(typeof(TimeFrameCandle), _security, TimeSpan.FromMinutes(15))
             {
                 BuildCandlesMode = MarketDataBuildModes.Load
@@ -199,6 +194,42 @@ namespace StrategyMinimaMaxima
         {
             MainWin win = new MainWin();
             win.Show();
+        }
+
+        private void btnGetLeg1Childs_Click(object sender, RoutedEventArgs e)
+        {
+            string report = ((ICIStrategy)_strategy).GetChildReport(LegStatus.Leg1, int.Parse(txtParentLevel.Text));
+            txtPriceActionReport.Text = report != string.Empty ? report : "[NO DATA AVAILABLE]";
+        }
+
+        private void btnGetLeg2Childs_Click(object sender, RoutedEventArgs e)
+        {
+            string report = ((ICIStrategy)_strategy).GetChildReport(LegStatus.Leg2, int.Parse(txtParentLevel.Text));
+            txtPriceActionReport.Text = report != string.Empty ? report : "[NO DATA AVAILABLE]"; 
+        }
+
+        private void btnGetLeg3Childs_Click(object sender, RoutedEventArgs e)
+        {
+            string report = ((ICIStrategy)_strategy).GetChildReport(LegStatus.Leg3, int.Parse(txtParentLevel.Text));
+            txtPriceActionReport.Text = report != string.Empty ? report : "[NO DATA AVAILABLE]";
+        }
+
+        private void btnGetParentSwings_Click(object sender, RoutedEventArgs e)
+        {
+            string report = ((ICIStrategy)_strategy).GetParentReport();
+            txtPriceActionReport.Text = report != string.Empty ? report : "[NO DATA AVAILABLE]";
+        }
+
+        private void btnGetLeg2ChildsCont_Click(object sender, RoutedEventArgs e)
+        {
+            string report = ((ICIStrategy)_strategy).GetChildReport(LegStatus.Leg2, int.Parse(txtParentLevel.Text), true);
+            txtPriceActionReport.Text = report != string.Empty ? report : "[NO DATA AVAILABLE]";
+        }
+
+        private void btnGetLeg3ChildsCont_Click(object sender, RoutedEventArgs e)
+        {
+            string report = ((ICIStrategy)_strategy).GetChildReport(LegStatus.Leg3, int.Parse(txtParentLevel.Text), true);
+            txtPriceActionReport.Text = report != string.Empty ? report : "[NO DATA AVAILABLE]";
         }
     }
 }

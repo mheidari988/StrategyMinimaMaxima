@@ -8,11 +8,9 @@ namespace StrategyMinimaMaxima.PriceAction
 {
     public class PriceActionContainer
     {
-        //private PriceActionHelper _priceActionHelper;
         long _candleSeq = 0;
         public PriceActionContainer()
         {
-            //_priceActionHelper = new PriceActionHelper();
             Candles = new List<Candle>();
             ValleyCandles = new List<Candle>();
             PeakCandles = new List<Candle>();

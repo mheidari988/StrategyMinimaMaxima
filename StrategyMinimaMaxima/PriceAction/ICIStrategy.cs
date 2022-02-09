@@ -12,29 +12,41 @@ using StockSharp.BusinessEntities;
 using StockSharp.Messages;
 
 namespace StrategyMinimaMaxima.PriceAction
-{ 
+{
     public class ICIStrategy : Strategy
     {
-        
-        public CandleSeries ParrentCandleSeries { get; private set; }
+
+        public CandleSeries ParentCandleSeries { get; private set; }
         public CandleSeries ChildCandleSeries { get; private set; }
 
-        private readonly PriceActionContainer ParrentContainer = new PriceActionContainer();
+        private readonly PriceActionContainer ParentContainer = new PriceActionContainer();
         private readonly PriceActionContainer ChildContainer = new PriceActionContainer();
         private PriceActionProcessor processor = new PriceActionProcessor();
 
-        public ICIStrategy(CandleSeries parrentCandleSeries, CandleSeries childCandleSeries, long processLimit = 0)
+        public ICIStrategy(CandleSeries parentCandleSeries, CandleSeries childCandleSeries, long processLimit = 0)
         {
-            ParrentCandleSeries = parrentCandleSeries;
+            ParentCandleSeries = parentCandleSeries;
             ChildCandleSeries = childCandleSeries;
-            ParrentContainer.ProcessLimit = processLimit;
+            ParentContainer.ProcessLimit = processLimit;
             ChildContainer.ProcessLimit = processLimit * 4;
         }
 
+        public string GetChildReport(LegStatus parentLeg, int parentLevel = 0, bool openEnd = false)
+        {
+            if (ParentContainer is null) return string.Empty;
+
+            return LogHelper.ReportSwingList(processor.GetChildSwings(parentLeg, parentLevel, openEnd));
+        }
+        public string GetParentReport()
+        {
+            if (ParentContainer is null) return string.Empty;
+
+            return LogHelper.ReportSwingList(ParentContainer.Swings.Values.ToList());
+        }
         protected override void OnStarted()
         {
             Connector.SubscribeCandles(ChildCandleSeries);
-            Connector.SubscribeCandles(ParrentCandleSeries);
+            Connector.SubscribeCandles(ParentCandleSeries);
 
             Connector.CandleSeriesProcessing += Connector_CandleSeriesProcessing;
 
@@ -44,20 +56,19 @@ namespace StrategyMinimaMaxima.PriceAction
         private void Connector_CandleSeriesProcessing(CandleSeries candleSeries, Candle candle)
         {
             //-------------------------------------------------------------------------
-            //--- Pass candles to ParrentManager to process and add it to processor ---
+            //--- Pass candles to ParentManager to process and add it to processor ---
             //-------------------------------------------------------------------------
             if (((TimeFrameCandle)candle).TimeFrame == TimeSpan.FromMinutes(60))
             {
                 if (candle.State == CandleStates.Finished)
                 {
-                    ParrentContainer.AddCandle(candle);
-                    processor.ParrentContainer = ParrentContainer;
-                    LogHelper.WriteCandleList(ParrentContainer.Candles, "_parrentCandles.txt");
+                    ParentContainer.AddCandle(candle);
+                    processor.ParentContainer = ParentContainer;
                 }
             }
 
             //-------------------------------------------------------------------------
-            //--- Pass candles to ParrentManager to process and add it to processor ---
+            //--- Pass candles to ParentManager to process and add it to processor ---
             //-------------------------------------------------------------------------
             if (((TimeFrameCandle)candle).TimeFrame == TimeSpan.FromMinutes(15))
             {
@@ -65,17 +76,6 @@ namespace StrategyMinimaMaxima.PriceAction
                 {
                     ChildContainer.AddCandle(candle);
                     processor.ChildContainer = ChildContainer;
-                    LogHelper.WriteCandleList(ChildContainer.Candles, "_childCandles.txt");
-
-                    if (ParrentContainer.Swings.Count > 0)
-                    {
-                        LogHelper.WriteSwingList(ParrentContainer.Swings.Values.ToList(), "_ParrentSwings.txt");
-                        LogHelper.WriteSwingList(ChildContainer.Swings.Values.ToList(), "_ChildSwings.txt");
-                        LogHelper.WriteSwingList(processor.GetChildSwingsOfLastParrent(LegStatus.Leg1), "_Leg1.txt");
-                        LogHelper.WriteSwingList(processor.GetChildSwingsOfLastParrent(LegStatus.Leg2), "_Leg2.txt");
-                        LogHelper.WriteSwingList(processor.GetChildSwingsOfLastParrent(LegStatus.Leg3), "_Leg3.txt");
-                        LogHelper.WriteSwingList(processor.GetChildSwingsOfLastParrent(LegStatus.Leg3, true), "_Leg3_nonStop.txt");
-                    }
                 }
             }
         }

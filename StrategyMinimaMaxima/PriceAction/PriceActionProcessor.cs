@@ -7,22 +7,24 @@ namespace StrategyMinimaMaxima.PriceAction
 {
     public class PriceActionProcessor
     {
+
+
         #region Constructors
         public PriceActionProcessor()
         {
             Hierarchy = 4;
         }
 
-        public PriceActionProcessor(PriceActionContainer parrent, PriceActionContainer child)
+        public PriceActionProcessor(PriceActionContainer parent, PriceActionContainer child)
         {
-            ParrentContainer = parrent ?? throw new ArgumentNullException(nameof(parrent));
+            ParentContainer = parent ?? throw new ArgumentNullException(nameof(parent));
             ChildContainer = child ?? throw new ArgumentNullException(nameof(child));
             Hierarchy = 4;
         }
 
-        public PriceActionProcessor(PriceActionContainer parrent, PriceActionContainer child, int hierarchy = 4)
+        public PriceActionProcessor(PriceActionContainer parent, PriceActionContainer child, int hierarchy = 4)
         {
-            ParrentContainer = parrent ?? throw new ArgumentNullException(nameof(parrent));
+            ParentContainer = parent ?? throw new ArgumentNullException(nameof(parent));
             ChildContainer = child ?? throw new ArgumentNullException(nameof(child));
             Hierarchy = hierarchy;
         }
@@ -31,7 +33,7 @@ namespace StrategyMinimaMaxima.PriceAction
 
         #region Properties And Private Fields
 
-        public PriceActionContainer? ParrentContainer { get; set; }
+        public PriceActionContainer? ParentContainer { get; set; }
         public PriceActionContainer? ChildContainer { get; set; }
         public int Hierarchy { get; set; }
 
@@ -39,17 +41,28 @@ namespace StrategyMinimaMaxima.PriceAction
 
         #region Private Methods
 
-        private bool IsManagersReady() => (ChildContainer != null || ParrentContainer != null);
+        private bool IsManagersReady() => (ChildContainer != null || ParentContainer != null);
+        private PriceActionSwing? GetParentSwing(int level = 0)
+        {
+            if (level < 0) throw new ArgumentOutOfRangeException(nameof(level) + " must grater than 0");
+
+            if (ParentContainer != null)
+                return ParentContainer.Swings.SkipLast(level).LastOrDefault().Value;
+            else
+                return null;
+        }
 
         #endregion
 
         #region Public Methods
 
-        public List<PriceActionSwing>? GetChildSwingsOfLastParrent(LegStatus fromLeg, bool nonStop = false)
+        public List<PriceActionSwing>? GetChildSwings(LegStatus fromLeg, int level = 0, bool openEnd = false)
         {
-            var result = ParrentContainer.Swings.LastOrDefault().Value;
+            if (ParentContainer is null) return null;
 
-            if (result != null)
+            var result = ParentContainer.Swings.SkipLast(level).LastOrDefault().Value;
+
+            if (result is not null)
             {
                 switch (fromLeg)
                 {
@@ -74,7 +87,7 @@ namespace StrategyMinimaMaxima.PriceAction
                                                where child.HighPrice == pHigh
                                                select child.SeqNum).Last();
 
-                                return generateChildList(nonStop, cStartSeq, cEndSeq);
+                                return generateChildList(openEnd, cStartSeq, cEndSeq);
                             }
                             catch (InvalidOperationException)
                             {
@@ -95,7 +108,7 @@ namespace StrategyMinimaMaxima.PriceAction
                                                where child.LowPrice == pLow
                                                select child.SeqNum).Last();
 
-                                return generateChildList(nonStop, cStartSeq, cEndSeq);
+                                return generateChildList(openEnd, cStartSeq, cEndSeq);
                             }
                             catch (InvalidOperationException)
                             {
@@ -126,7 +139,7 @@ namespace StrategyMinimaMaxima.PriceAction
                                                where child.HighPrice == pHigh
                                                select child.SeqNum).Last();
 
-                                return generateChildList(nonStop, cStartSeq, cEndSeq);
+                                return generateChildList(openEnd, cStartSeq, cEndSeq);
                             }
                             catch (InvalidOperationException)
                             {
@@ -147,7 +160,7 @@ namespace StrategyMinimaMaxima.PriceAction
                                                where child.LowPrice == pLow
                                                select child.SeqNum).Last();
 
-                                return generateChildList(nonStop, cStartSeq, cEndSeq);
+                                return generateChildList(openEnd, cStartSeq, cEndSeq);
                             }
                             catch (InvalidOperationException)
                             {
@@ -178,7 +191,7 @@ namespace StrategyMinimaMaxima.PriceAction
                                                where child.HighPrice == pHigh
                                                select child.SeqNum).Last();
 
-                                return generateChildList(nonStop, cStartSeq, cEndSeq);
+                                return generateChildList(openEnd, cStartSeq, cEndSeq);
                             }
                             catch (InvalidOperationException)
                             {
@@ -200,12 +213,12 @@ namespace StrategyMinimaMaxima.PriceAction
                                                where child.LowPrice == pLow
                                                select child.SeqNum).Last();
 
-                                return generateChildList(nonStop, cStartSeq, cEndSeq);
+                                return generateChildList(openEnd, cStartSeq, cEndSeq);
                             }
                             catch (InvalidOperationException)
                             {
                                 // This is because Start or End SeqNum not found
-                                return null!; 
+                                return null!;
                             }
                         }
                         else
@@ -217,7 +230,7 @@ namespace StrategyMinimaMaxima.PriceAction
                 }
             }
 
-            return null!; 
+            return null!;
         }
 
         private List<PriceActionSwing> generateChildList(bool nonStop, long cStartSeq, long cEndSeq)
@@ -232,236 +245,6 @@ namespace StrategyMinimaMaxima.PriceAction
                 var childCandles = ChildContainer.Candles.Where(c => c.SeqNum >= cStartSeq).ToList();
                 return PriceActionContainer.GenerateContainer(childCandles).Swings.Values.ToList();
             }
-        }
-
-        public PriceActionContainer GetChildContainerByIndex(long reverseIndex)
-        {
-            throw new NotImplementedException();
-        }
-        public PriceActionContainer GetChildContainerByParrentSwing(PriceActionSwing parrentSwing, LegStatus leg)
-        {
-            throw new NotImplementedException();
-        }
-
-
-        public List<PriceActionSwing>? GetChildSwingsOf(LegStatus leg)
-        {
-            if (!IsManagersReady()) return null;
-
-            var lastParrentSwing = ParrentContainer.Swings.LastOrDefault();
-            if (lastParrentSwing.Value != null)
-            {
-                switch (leg)
-                {
-                    case LegStatus.Unknown:
-                        throw new ArgumentException("Legs should have status.");
-                    case LegStatus.Leg1:
-                        return (from swing in ChildContainer.Swings.Values
-                                where swing.Leg1.BeginElement.Candle.SeqNum
-                                >= lastParrentSwing.Value.Leg1.BeginElement.Candle.SeqNum * Hierarchy
-                                && swing.Leg3.EndElement.Candle.SeqNum
-                                <= lastParrentSwing.Value.Leg1.EndElement.Candle.SeqNum * Hierarchy
-                                select swing).ToList();
-                    case LegStatus.Leg2:
-                        return (from swing in ChildContainer.Swings.Values
-                                where swing.Leg1.BeginElement.Candle.SeqNum
-                                >= lastParrentSwing.Value.Leg2.BeginElement.Candle.SeqNum * Hierarchy
-                                && swing.Leg3.EndElement.Candle.SeqNum
-                                <= lastParrentSwing.Value.Leg2.EndElement.Candle.SeqNum * Hierarchy
-                                select swing).ToList();
-                    case LegStatus.Leg3:
-                        return (from swing in ChildContainer.Swings.Values
-                                where swing.Leg1.BeginElement.Candle.SeqNum
-                                >= lastParrentSwing.Value.Leg3.BeginElement.Candle.SeqNum * Hierarchy
-                                && swing.Leg3.EndElement.Candle.SeqNum
-                                <= lastParrentSwing.Value.Leg3.EndElement.Candle.SeqNum * Hierarchy
-                                select swing).ToList();
-                    default:
-                        break;
-                }
-            }
-            return null;
-        }
-
-        public List<PriceActionSwing>? GetChildSwingsFrom(LegStatus leg)
-        {
-            if (!IsManagersReady()) return null;
-
-            var lastParrentSwing = ParrentContainer.Swings.LastOrDefault();
-            if (lastParrentSwing.Value != null)
-            {
-                switch (leg)
-                {
-                    case LegStatus.Unknown:
-                        throw new ArgumentException("Legs should have status.");
-                    case LegStatus.Leg1:
-                        return (from swing in ChildContainer.Swings.Values
-                                where swing.Leg1.BeginElement.Candle.SeqNum
-                                >= lastParrentSwing.Value.Leg1.BeginElement.Candle.SeqNum * Hierarchy
-                                select swing).ToList();
-                    case LegStatus.Leg2:
-                        return (from swing in ChildContainer.Swings.Values
-                                where swing.Leg1.BeginElement.Candle.SeqNum
-                                >= lastParrentSwing.Value.Leg2.BeginElement.Candle.SeqNum * Hierarchy
-                                select swing).ToList();
-                    case LegStatus.Leg3:
-                        return (from swing in ChildContainer.Swings.Values
-                                where swing.Leg1.BeginElement.Candle.SeqNum
-                                >= lastParrentSwing.Value.Leg3.BeginElement.Candle.SeqNum * Hierarchy
-                                select swing).ToList();
-                    default:
-                        break;
-                }
-            }
-            return null;
-        }
-
-        public List<Candle>? GetChildCandlesOf(LegStatus leg)
-        {
-            if (!IsManagersReady()) return null;
-
-            var lastParrentSwing = ParrentContainer.Swings.LastOrDefault();
-            if (lastParrentSwing.Value != null)
-            {
-                switch (leg)
-                {
-                    case LegStatus.Unknown:
-                        throw new ArgumentException("Legs should have status.");
-                    case LegStatus.Leg1:
-                        return (from child in ChildContainer.Candles
-                                where child.SeqNum >= lastParrentSwing.Value.Leg1.BeginElement.Candle.SeqNum * Hierarchy
-                                && child.SeqNum <= lastParrentSwing.Value.Leg1.EndElement.Candle.SeqNum * Hierarchy
-                                select child).ToList();
-                    case LegStatus.Leg2:
-                        return (from child in ChildContainer.Candles
-                                where child.SeqNum >= lastParrentSwing.Value.Leg2.BeginElement.Candle.SeqNum * Hierarchy
-                                && child.SeqNum <= lastParrentSwing.Value.Leg2.EndElement.Candle.SeqNum * Hierarchy
-                                select child).ToList();
-                    case LegStatus.Leg3:
-                        return (from child in ChildContainer.Candles
-                                where child.SeqNum >= lastParrentSwing.Value.Leg3.BeginElement.Candle.SeqNum * Hierarchy
-                                && child.SeqNum <= lastParrentSwing.Value.Leg3.EndElement.Candle.SeqNum * Hierarchy
-                                select child).ToList();
-                    default:
-                        break;
-                }
-            }
-            return null;
-        }
-
-        public List<Candle>? GetChildCandlesFrom(LegStatus leg)
-        {
-            if (!IsManagersReady()) return null;
-
-            var lastParrentSwing = ParrentContainer.Swings.LastOrDefault();
-            if (lastParrentSwing.Value != null)
-            {
-                switch (leg)
-                {
-                    case LegStatus.Unknown:
-                        throw new ArgumentException("Legs should have status.");
-                    case LegStatus.Leg1:
-                        return (from child in ChildContainer.Candles
-                                where child.SeqNum >= lastParrentSwing.Value.Leg1.BeginElement.Candle.SeqNum * Hierarchy
-                                select child).ToList();
-                    case LegStatus.Leg2:
-                        return (from child in ChildContainer.Candles
-                                where child.SeqNum >= lastParrentSwing.Value.Leg2.BeginElement.Candle.SeqNum * Hierarchy
-                                select child).ToList();
-                    case LegStatus.Leg3:
-                        return (from child in ChildContainer.Candles
-                                where child.SeqNum >= lastParrentSwing.Value.Leg3.BeginElement.Candle.SeqNum * Hierarchy
-                                select child).ToList();
-                    default:
-                        break;
-                }
-            }
-            return null;
-        }
-
-        public List<PriceActionElement>? GetChildValleysOf(LegStatus leg)
-        {
-            if (!IsManagersReady()) return null;
-
-            var lastParrentSwing = ParrentContainer.Swings.LastOrDefault();
-            if (lastParrentSwing.Value != null)
-            {
-                switch (leg)
-                {
-                    case LegStatus.Unknown:
-                        throw new ArgumentException("Legs should have status.");
-                    case LegStatus.Leg1:
-                        return (from child in ChildContainer.ChainedElements.Values
-                                where child.Candle.SeqNum >= lastParrentSwing.Value.Leg1.BeginElement.Candle.SeqNum * Hierarchy
-                                && child.Candle.SeqNum <= lastParrentSwing.Value.Leg1.EndElement.Candle.SeqNum * Hierarchy
-                                && child.PeakValleyType == PeakValleyType.Valley
-                                select child).ToList();
-                    case LegStatus.Leg2:
-                        return (from child in ChildContainer.ChainedElements.Values
-                                where child.Candle.SeqNum >= lastParrentSwing.Value.Leg2.BeginElement.Candle.SeqNum * Hierarchy
-                                && child.Candle.SeqNum <= lastParrentSwing.Value.Leg2.EndElement.Candle.SeqNum * Hierarchy
-                                && child.PeakValleyType == PeakValleyType.Valley
-                                select child).ToList();
-                    case LegStatus.Leg3:
-                        return (from child in ChildContainer.ChainedElements.Values
-                                where child.Candle.SeqNum >= lastParrentSwing.Value.Leg3.BeginElement.Candle.SeqNum * Hierarchy
-                                && child.Candle.SeqNum <= lastParrentSwing.Value.Leg3.EndElement.Candle.SeqNum * Hierarchy
-                                && child.PeakValleyType == PeakValleyType.Valley
-                                select child).ToList();
-                    default:
-                        break;
-                }
-            }
-            return null;
-        }
-
-        public List<PriceActionElement>? GetChildPeaksOf(LegStatus leg)
-        {
-            if (!IsManagersReady()) return null;
-
-            var lastParrentSwing = ParrentContainer.Swings.LastOrDefault();
-            if (lastParrentSwing.Value != null)
-            {
-                switch (leg)
-                {
-                    case LegStatus.Unknown:
-                        throw new ArgumentException("Legs should have status.");
-                    case LegStatus.Leg1:
-                        return (from child in ChildContainer.ChainedElements.Values
-                                where child.Candle.SeqNum >= lastParrentSwing.Value.Leg1.BeginElement.Candle.SeqNum * Hierarchy
-                                && child.Candle.SeqNum <= lastParrentSwing.Value.Leg1.EndElement.Candle.SeqNum * Hierarchy
-                                && child.PeakValleyType == PeakValleyType.Peak
-                                select child).ToList();
-                    case LegStatus.Leg2:
-                        return (from child in ChildContainer.ChainedElements.Values
-                                where child.Candle.SeqNum >= lastParrentSwing.Value.Leg2.BeginElement.Candle.SeqNum * Hierarchy
-                                && child.Candle.SeqNum <= lastParrentSwing.Value.Leg2.EndElement.Candle.SeqNum * Hierarchy
-                                && child.PeakValleyType == PeakValleyType.Peak
-                                select child).ToList();
-                    case LegStatus.Leg3:
-                        return (from child in ChildContainer.ChainedElements.Values
-                                where child.Candle.SeqNum >= lastParrentSwing.Value.Leg3.BeginElement.Candle.SeqNum * Hierarchy
-                                && child.Candle.SeqNum <= lastParrentSwing.Value.Leg3.EndElement.Candle.SeqNum * Hierarchy
-                                && child.PeakValleyType == PeakValleyType.Peak
-                                select child).ToList();
-                    default:
-                        break;
-                }
-            }
-            return null;
-        }
-
-        public float GetSlopeOfParrentLeg(LegStatus leg)
-        {
-            throw new NotImplementedException();
-        }
-        public float GetChildValleysSlopesOf(LegStatus leg)
-        {
-            throw new NotImplementedException();
-        }
-        public float GetChildPeaksSlopesOf(LegStatus leg)
-        {
-            throw new NotImplementedException();
         }
 
         #endregion

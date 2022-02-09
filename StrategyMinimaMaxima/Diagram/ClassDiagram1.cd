@@ -14,11 +14,11 @@
       <FileName>PriceAction\PriceActionSwing.cs</FileName>
     </TypeIdentifier>
   </Class>
-  <Class Name="StrategyMinimaMaxima.PriceAction.PriceActionCanvas">
+  <Class Name="StrategyMinimaMaxima.PriceAction.PriceActionContainer">
     <Position X="11.5" Y="0.5" Width="2.75" />
     <TypeIdentifier>
-      <HashCode>IEAAAAAAYAIAAAAAAAAQAAIgAAAAAAAAQAAAICAAAIA=</HashCode>
-      <FileName>PriceAction\PriceActionCanvas.cs</FileName>
+      <HashCode>IEAAAAAAYAIAAAAAgAAQAAIAAAAAAAAAQAAAYCAAAIA=</HashCode>
+      <FileName>PriceAction\PriceActionContainer.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="StrategyMinimaMaxima.PriceAction.PriceActionElement">
@@ -45,21 +45,14 @@
   <Class Name="StrategyMinimaMaxima.PriceAction.PriceActionProcessor">
     <Position X="5.25" Y="7.25" Width="3.5" />
     <TypeIdentifier>
-      <HashCode>AABYCAAAAAAABAAAABAAAAAAgAACAAAAABAgAACgAAA=</HashCode>
+      <HashCode>AAAAAAAIAAgAAAAAACAAAAAAAAAAAAAAAAAkAACEAAA=</HashCode>
       <FileName>PriceAction\PriceActionProcessor.cs</FileName>
-    </TypeIdentifier>
-  </Class>
-  <Class Name="StrategyMinimaMaxima.PriceAction.PriceActionPosition">
-    <Position X="9.5" Y="7.25" Width="2" />
-    <TypeIdentifier>
-      <HashCode>AAAACAAIEAAAAAAAACAAAAABAAAAABBAAAEQAAAAAAA=</HashCode>
-      <FileName>PriceAction\PriceActionPosition.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="StrategyMinimaMaxima.PriceAction.LogHelper">
     <Position X="19.5" Y="0.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>ABAAAAAAAAAAAAAAAAAAKAABEAAAAAAAAAAAAAAAAAA=</HashCode>
+      <HashCode>ABAAAAAAAAAAAAAAAAAAKAABEAAAAAAAAgAAAAAAAAA=</HashCode>
       <FileName>PriceAction\LogHelper.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -84,11 +77,11 @@
       <FileName>PriceAction\PeakValleyType.cs</FileName>
     </TypeIdentifier>
   </Enum>
-  <Enum Name="StrategyMinimaMaxima.PriceAction.PeakValleyStatus">
+  <Enum Name="StrategyMinimaMaxima.PriceAction.HighLowType">
     <Position X="0.5" Y="7.5" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAIBAAAAAAAAAAAABAAgAAAAAAAAAAEAAAA=</HashCode>
-      <FileName>PriceAction\PeakValleyStatus.cs</FileName>
+      <FileName>PriceAction\HighLowType.cs</FileName>
     </TypeIdentifier>
   </Enum>
   <Enum Name="StrategyMinimaMaxima.PriceAction.ImpulseType">

@@ -29,7 +29,7 @@ namespace StrategyMinimaMaxima.PriceAction
 
         public override string ToString()
         {
-            return $"SeqNum:{Candle!.SeqNum}{System.Environment.NewLine}Open Time:{Candle.OpenTime}{System.Environment.NewLine}" +
+            return $"SeqNum:{Candle!.SeqNum}{System.Environment.NewLine}Open DateTime: {Candle.OpenTime.DateTime.ToString("dd-MM-yyyy @ HH:mm")}{System.Environment.NewLine}" +
                 $"Open: {Candle.OpenPrice} - Close:{Candle.ClosePrice} - High:{Candle.HighPrice} - Low:{Candle.LowPrice}{System.Environment.NewLine}" +
                 $"Momentum:{CandleMomentum} - PeakValleyType:{PeakValleyType} - PeakValleyStatus:{PeakValleyStatus}";
         }
