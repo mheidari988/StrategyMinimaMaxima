@@ -115,7 +115,7 @@ namespace StrategyMinimaMaxima.PriceAction
             //------------------Iterate over other Candles to find minima and maxima------------------
             for (int i = 1; i < Candles.Count - 1; i++)
             {
-                if (Candles[i - 1].LowPrice > Candles[i].LowPrice && Candles[i].LowPrice < Candles[i + 1].LowPrice)
+                if (Candles[i - 1].LowPrice >= Candles[i].LowPrice && Candles[i].LowPrice <= Candles[i + 1].LowPrice)
                 {
                     PriceActionElement min = new PriceActionElement(Candles[i])
                     {
@@ -125,7 +125,7 @@ namespace StrategyMinimaMaxima.PriceAction
 
                     ValleyCandles.Add(Candles[i]);
                 }
-                if (Candles[i - 1].HighPrice < Candles[i].HighPrice && Candles[i].HighPrice > Candles[i + 1].HighPrice)
+                if (Candles[i - 1].HighPrice <= Candles[i].HighPrice && Candles[i].HighPrice >= Candles[i + 1].HighPrice)
                 {
                     PriceActionElement _max = new PriceActionElement(Candles[i])
                     {
