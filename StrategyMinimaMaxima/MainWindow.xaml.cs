@@ -18,6 +18,8 @@ using StockSharp.Xaml.Charting;
 using System.Collections.Generic;
 using StockSharp.Algo;
 using StrategyMinimaMaxima.PriceAction;
+using StrategyMinimaMaxima.PriceAction.Signal;
+using System.Linq;
 
 namespace StrategyMinimaMaxima
 {
@@ -26,6 +28,7 @@ namespace StrategyMinimaMaxima
     /// </summary>
     public partial class MainWindow : Window
     {
+        private int _report_temp_counter;
         private HistoryEmulationConnector _connector;
         private ChartCandleElement _candleElement;
         private ChartTradeElement _tradesElem;
@@ -37,8 +40,7 @@ namespace StrategyMinimaMaxima
         private Security _security;
         private Portfolio _portfolio;
         private readonly LogManager _logManager;
-        private Strategy _strategy;
-        //private readonly string _pathHistory = @"D:\StockSharp\StockSharpData\Storage";
+        private ICIStrategy iciStrategy;
         private readonly string _pathHistory = @"C:\Storage";
 
         private ChartBandElement _pnl;
@@ -118,7 +120,7 @@ namespace StrategyMinimaMaxima
             _connector.NewOrder += OrderGrid.Orders.Add;
             _connector.OrderRegisterFailed += OrderGrid.AddRegistrationFail;
 
-            _strategy = new ICIStrategy(_candleSeries_1h, _candleSeries_15m, long.Parse(txtProcessLimit.Text) + 1) // +1 is for TradingView
+            iciStrategy = new ICIStrategy(_candleSeries_1h, _candleSeries_15m, long.Parse(txtProcessLimit.Text) + 1) // +1 is for TradingView
             {
                 Security = _security,
                 Connector = _connector,
@@ -126,19 +128,22 @@ namespace StrategyMinimaMaxima
             };
 
             //.................adding strategy to log manager...................
-            _logManager.Sources.Add(_strategy);
+            _logManager.Sources.Add(iciStrategy);
 
             //.................setting strategy events...................
-            _strategy.NewMyTrade += MyTradeGrid.Trades.Add;
-            _strategy.NewMyTrade += Strategy_NewMyTrade;
-            _strategy.PnLChanged += Strategy_PnLChanged;
+            iciStrategy.NewMyTrade += MyTradeGrid.Trades.Add;
+            iciStrategy.NewMyTrade += Strategy_NewMyTrade;
+            iciStrategy.PnLChanged += Strategy_PnLChanged;
 
             //.................setting strategy statistics to the gui...................
-            StatisticParameterGrid.Parameters.AddRange(_strategy.StatisticManager.Parameters);
+            StatisticParameterGrid.Parameters.AddRange(iciStrategy.StatisticManager.Parameters);
 
             //.................connecting connector...................
             _connector.Connect();
 
+            txtReportLeft.Text = "";
+            txtReportRight.Text = "";
+            _report_temp_counter = 0;
         }
         private void InitChart()
         {
@@ -162,10 +167,10 @@ namespace StrategyMinimaMaxima
         private void Strategy_PnLChanged()
         {
             var data = new ChartDrawData();
-            data.Group(_strategy.CurrentTime)
-                .Add(_pnl, _strategy.PnL)
-                .Add(_unrealizedPnL, _strategy.PnLManager.UnrealizedPnL ?? 0)
-                .Add(_commissionCurve, _strategy.Commission ?? 0);
+            data.Group(iciStrategy.CurrentTime)
+                .Add(_pnl, iciStrategy.PnL)
+                .Add(_unrealizedPnL, iciStrategy.PnLManager.UnrealizedPnL ?? 0)
+                .Add(_commissionCurve, iciStrategy.Commission ?? 0);
             EquityCurveChart.Draw(data);
         }
 
@@ -178,16 +183,49 @@ namespace StrategyMinimaMaxima
 
         private void Connector_NewSecurity(Security security)
         {
-            _strategy.Start();
+            iciStrategy.Processor.BullishICI += Processor_BullishICI;
+            iciStrategy.Processor.BearishICI += Processor_BearishICI;
+            iciStrategy.Processor.SignalPatternChanged += Processor_SignalPatternChanged;
+            iciStrategy.Start();
             _connector.Start();
         }
-
         private void Connector_CandleSeriesProcessing(CandleSeries candleSeries, Candle candle)
         {
             if (((TimeFrameCandle)candle).TimeFrame == TimeSpan.FromMinutes(60))
             {
                 Chart.Draw(_candleElement, candle);
             }
+        }
+
+        private void Processor_SignalPatternChanged(object? sender, ParentPatternEventArgs e)
+        {
+            Dispatcher.Invoke(new Action(() =>
+            {
+                txtReportLeft.Text += $"{++_report_temp_counter}-Signal Pattern Changed: {e.ParentPatternType}" +
+                $"{Environment.NewLine}";
+            }));
+        }
+
+        private void Processor_BearishICI(object? sender, ParentPatternEventArgs e)
+        {
+            Dispatcher.Invoke(new Action(() =>
+            {
+                txtReportRight.Text += $"{++_report_temp_counter}-{e.ParentPatternType}: " +
+                $"{ e.ParentContainer.Candles.LastOrDefault()!.OpenTime:dd-MM-yyyy @ HH:mm}" +
+                $"{Environment.NewLine}Slope = {Math.Abs(e.ImpulseSlope)}{Environment.NewLine}";
+                txtPriceActionReport.ScrollToEnd();
+            }));
+        }
+
+        private void Processor_BullishICI(object? sender, ParentPatternEventArgs e)
+        {
+            Dispatcher.Invoke(new Action(() =>
+            {
+                txtReportRight.Text += $"{++_report_temp_counter}-{e.ParentPatternType}: " +
+                $"{ e.ParentContainer.Candles.LastOrDefault()!.OpenTime:dd-MM-yyyy @ HH:mm}" +
+                $"{Environment.NewLine}Slope = {Math.Abs(e.ImpulseSlope)}{Environment.NewLine}";
+                txtPriceActionReport.ScrollToEnd();
+            }));
         }
 
         private void btnOpenMainClicked(object sender, RoutedEventArgs e)
@@ -198,37 +236,37 @@ namespace StrategyMinimaMaxima
 
         private void btnGetLeg1Childs_Click(object sender, RoutedEventArgs e)
         {
-            string report = ((ICIStrategy)_strategy).GetChildReport(LegStatus.Leg1, int.Parse(txtParentLevel.Text));
+            string report = ((ICIStrategy)iciStrategy).GetChildReport(LegStatus.Leg1, int.Parse(txtParentLevel.Text));
             txtPriceActionReport.Text = report != string.Empty ? report : "[NO DATA AVAILABLE]";
         }
 
         private void btnGetLeg2Childs_Click(object sender, RoutedEventArgs e)
         {
-            string report = ((ICIStrategy)_strategy).GetChildReport(LegStatus.Leg2, int.Parse(txtParentLevel.Text));
+            string report = ((ICIStrategy)iciStrategy).GetChildReport(LegStatus.Leg2, int.Parse(txtParentLevel.Text));
             txtPriceActionReport.Text = report != string.Empty ? report : "[NO DATA AVAILABLE]"; 
         }
 
         private void btnGetLeg3Childs_Click(object sender, RoutedEventArgs e)
         {
-            string report = ((ICIStrategy)_strategy).GetChildReport(LegStatus.Leg3, int.Parse(txtParentLevel.Text));
+            string report = ((ICIStrategy)iciStrategy).GetChildReport(LegStatus.Leg3, int.Parse(txtParentLevel.Text));
             txtPriceActionReport.Text = report != string.Empty ? report : "[NO DATA AVAILABLE]";
         }
 
         private void btnGetParentSwings_Click(object sender, RoutedEventArgs e)
         {
-            string report = ((ICIStrategy)_strategy).GetParentReport();
+            string report = ((ICIStrategy)iciStrategy).GetParentReport();
             txtPriceActionReport.Text = report != string.Empty ? report : "[NO DATA AVAILABLE]";
         }
 
         private void btnGetLeg2ChildsCont_Click(object sender, RoutedEventArgs e)
         {
-            string report = ((ICIStrategy)_strategy).GetChildReport(LegStatus.Leg2, int.Parse(txtParentLevel.Text), true);
+            string report = ((ICIStrategy)iciStrategy).GetChildReport(LegStatus.Leg2, int.Parse(txtParentLevel.Text), true);
             txtPriceActionReport.Text = report != string.Empty ? report : "[NO DATA AVAILABLE]";
         }
 
         private void btnGetLeg3ChildsCont_Click(object sender, RoutedEventArgs e)
         {
-            string report = ((ICIStrategy)_strategy).GetChildReport(LegStatus.Leg3, int.Parse(txtParentLevel.Text), true);
+            string report = ((ICIStrategy)iciStrategy).GetChildReport(LegStatus.Leg3, int.Parse(txtParentLevel.Text), true);
             txtPriceActionReport.Text = report != string.Empty ? report : "[NO DATA AVAILABLE]";
         }
     }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using StockSharp.Algo.Candles;
 
@@ -136,9 +137,8 @@ namespace StrategyMinimaMaxima.PriceAction
                     PeakCandles.Add(Candles[i]);
                 }
             }
-
             //------------------If last candle is bullish then add minima last------------------
-            if (Candles[0].OpenPrice < Candles[0].ClosePrice)
+            if (Candles[Candles.Count - 1].OpenPrice < Candles[Candles.Count - 1].ClosePrice)
             {
                 if (Candles[Candles.Count - 1].LowPrice < Candles[Candles.Count - 2].LowPrice)
                 {
@@ -161,7 +161,7 @@ namespace StrategyMinimaMaxima.PriceAction
                     PeakCandles.Add(Candles[Candles.Count - 1]);
                 }
             }
-            else
+            else if (Candles[Candles.Count - 1].OpenPrice > Candles[Candles.Count - 1].ClosePrice)
             {
                 if (Candles[Candles.Count - 1].HighPrice > Candles[Candles.Count - 2].HighPrice)
                 {
@@ -185,7 +185,6 @@ namespace StrategyMinimaMaxima.PriceAction
                 }
             }
         }
-
         private void processChainedElements()
         {
             if (Elements == null)
@@ -202,28 +201,22 @@ namespace StrategyMinimaMaxima.PriceAction
             {
                 for (int i = 1; i < Elements.Count; i++)
                 {
-                    if (Elements[i].PeakValleyType == PeakValleyType.Valley && Elements[i - 1].PeakValleyType == PeakValleyType.Valley)
+                    if (Elements[i].PeakValleyType == PeakValleyType.Valley
+                        && Elements[i - 1].PeakValleyType == PeakValleyType.Valley)
                     {
                         //----------------------If current element's LowPrice is lower than----------------
                         //----------------------previous element's LowPrice--------------------------------
-                        if (Elements[i].Candle!.LowPrice > Elements[i - 1].Candle!.LowPrice)
-                        {
-                            continue;
-                        }
-                        else if (Elements[i].Candle!.LowPrice < Elements[i - 1].Candle!.LowPrice)
+                        if (Elements[i].Candle!.LowPrice < Elements[i - 1].Candle!.LowPrice)
                         {
                             ChainedElements.Remove(_chainIndex - 1);
                             ChainedElements.Add(_chainIndex - 1, Elements[i]);
                         }
                     }
-                    else if (Elements[i].PeakValleyType == PeakValleyType.Peak && Elements[i - 1].PeakValleyType == PeakValleyType.Peak)
+                    else if (Elements[i].PeakValleyType == PeakValleyType.Peak
+                        && Elements[i - 1].PeakValleyType == PeakValleyType.Peak)
                     {
                         //----------------------If current element's HighPrice is higher than----------------
                         //----------------------previous element's HighPrice: We ----------------------------------
-                        if (Elements[i].Candle!.HighPrice < Elements[i - 1].Candle!.HighPrice)
-                        {
-                            continue;
-                        }
                         if (Elements[i].Candle!.HighPrice > Elements[i - 1].Candle!.HighPrice)
                         {
                             ChainedElements.Remove(_chainIndex - 1);
@@ -238,7 +231,6 @@ namespace StrategyMinimaMaxima.PriceAction
                 }
             }
         }
-
         private void processLegs()
         {
             if (ChainedElements == null)
@@ -255,7 +247,6 @@ namespace StrategyMinimaMaxima.PriceAction
                 }
             }
         }
-
         private void processSwings()
         {
             Swings.Clear();
@@ -268,11 +259,17 @@ namespace StrategyMinimaMaxima.PriceAction
                 Swings.Add(_swingIndex++, new PriceActionSwing(Legs[i - 1], Legs[i], Legs[i + 1]));
             }
         }
+        private decimal BaseOneTruncate(decimal price)
+        {
+            if (price != 0 && price >= 1)
+                while (Math.Truncate(price / 10) > 0) price /= 10;
+            else if (price != 0 && price < 1)
+                while ((price * 10) < 10) price *= 10;
+            return price;
+        }
 
         #endregion
 
-
-        //----------------- Public methods ----------------------
         public static PriceActionContainer GenerateContainer(List<Candle> candles, bool resetSeqNum = false)
         {
             if (candles is null)
@@ -288,7 +285,29 @@ namespace StrategyMinimaMaxima.PriceAction
             return container;
         }
 
-        //----------------- Public Properties ----------------------
+        public decimal GetSlope(long startSeqNum, long endSeqNum, MomentumType momentum)
+        {
+            if (Candles is null) throw new NullReferenceException(nameof(Candles));
+
+            var startPoint = Candles.SingleOrDefault(x => x.SeqNum == startSeqNum);
+            var endPoint = Candles.SingleOrDefault(x => x.SeqNum == endSeqNum);
+            if (startPoint == null || endPoint == null) throw new ArgumentNullException(nameof(startPoint));
+
+            var distance = (endSeqNum - startSeqNum) + 1;
+
+            switch (momentum)
+            {
+                case MomentumType.Bullish:
+                    return (BaseOneTruncate(endPoint.HighPrice) - BaseOneTruncate(startPoint.LowPrice)) / distance;
+                case MomentumType.Bearish:
+                    return (BaseOneTruncate(endPoint.LowPrice) - BaseOneTruncate(startPoint.HighPrice)) / distance;
+                case MomentumType.None:
+                    throw new ArgumentOutOfRangeException(nameof(momentum));
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(momentum));
+            }
+        }
+        public decimal GetAbsoluteSlope(long startSeqNum, long endSeqNum, MomentumType momentum) => Math.Abs(GetSlope(startSeqNum, endSeqNum, momentum));
 
         #region Public Properties
 

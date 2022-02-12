@@ -38,12 +38,12 @@
   <Class Name="StrategyMinimaMaxima.PriceAction.PriceActionProcessor">
     <Position X="5.25" Y="7.25" Width="3.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAIAAgAAAAAACAAAAAAAAAAAAAAAAAkAACEAAA=</HashCode>
+      <HashCode>EAAAAAAIBAAAIAAAACAAAAAAAAQAAAAAAAAkCAAEAAA=</HashCode>
       <FileName>PriceAction\PriceActionProcessor.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="StrategyMinimaMaxima.PriceAction.LogHelper">
-    <Position X="19.5" Y="0.5" Width="1.5" />
+    <Position X="14.5" Y="0.5" Width="1.5" />
     <TypeIdentifier>
       <HashCode>ABAAAAAAAAAAAAAAAAAAIAABEAAAAAAAAgAAAAAAAAA=</HashCode>
       <FileName>PriceAction\LogHelper.cs</FileName>

@@ -15,13 +15,13 @@ namespace StrategyMinimaMaxima.PriceAction
 {
     public class ICIStrategy : Strategy
     {
+        private readonly PriceActionContainer ParentContainer = new PriceActionContainer();
+        private readonly PriceActionContainer ChildContainer = new PriceActionContainer();
+        private PriceActionProcessor processor;
 
         public CandleSeries ParentCandleSeries { get; private set; }
         public CandleSeries ChildCandleSeries { get; private set; }
-
-        private readonly PriceActionContainer ParentContainer = new PriceActionContainer();
-        private readonly PriceActionContainer ChildContainer = new PriceActionContainer();
-        private PriceActionProcessor processor = new PriceActionProcessor();
+        public PriceActionProcessor Processor { get => processor; private set => processor = value; }
 
         public ICIStrategy(CandleSeries parentCandleSeries, CandleSeries childCandleSeries, long processLimit = 0)
         {
@@ -29,13 +29,14 @@ namespace StrategyMinimaMaxima.PriceAction
             ChildCandleSeries = childCandleSeries;
             ParentContainer.ProcessLimit = processLimit;
             ChildContainer.ProcessLimit = processLimit * 4;
+            processor = new PriceActionProcessor(ParentContainer, ChildContainer);
         }
 
         public string GetChildReport(LegStatus parentLeg, int parentLevel = 0, bool openEnd = false)
         {
             if (ParentContainer is null) return string.Empty;
 
-            return LogHelper.ReportSwingList(processor.GetChildSwings(parentLeg, parentLevel, openEnd));
+            return LogHelper.ReportSwingList(Processor.GetChildSwings(parentLeg, parentLevel, openEnd));
         }
         public string GetParentReport()
         {
@@ -63,7 +64,7 @@ namespace StrategyMinimaMaxima.PriceAction
                 if (candle.State == CandleStates.Finished)
                 {
                     ParentContainer.AddCandle(candle);
-                    processor.ParentContainer = ParentContainer;
+                    Processor.ParentContainer = ParentContainer;
                 }
             }
 
@@ -75,7 +76,7 @@ namespace StrategyMinimaMaxima.PriceAction
                 if (candle.State == CandleStates.Finished)
                 {
                     ChildContainer.AddCandle(candle);
-                    processor.ChildContainer = ChildContainer;
+                    Processor.ChildContainer = ChildContainer;
                 }
             }
         }

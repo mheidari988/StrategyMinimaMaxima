@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="LinqStatistics" Version="2.3.0" />
     <PackageReference Include="StockSharp.Algo" Version="5.0.119" />
     <PackageReference Include="StockSharp.Algo.Strategies" Version="5.0.111" />
     <PackageReference Include="StockSharp.Binance" Version="5.0.108" />
