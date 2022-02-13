@@ -427,7 +427,8 @@ namespace StrategyMinimaMaxima.PriceAction
                         && getParentSwing(1)!.PatternType == PatternType.BullishCIC
                         && getParentSwing()!.PatternType == PatternType.BullishICC
                         && PriceActionSwing.GetImpulseType(getParentSwing(2)!) == ImpulseType.Breakout
-                        && PriceActionSwing.GetCorrectionType(getParentSwing(1)!) != CorrectionType.Brokeback)
+                        && PriceActionSwing.GetCorrectionType(getParentSwing()!,
+                            getParentSwing(2)!.Leg1.EndElement) != CorrectionType.Brokeback)
                     {
                         if (IsTwoCloseBreak(getParentSwing(2)!))
                         {
@@ -463,7 +464,8 @@ namespace StrategyMinimaMaxima.PriceAction
                         && getParentSwing(1)!.PatternType == PatternType.BearishCIC
                         && getParentSwing()!.PatternType == PatternType.BearishICC
                         && PriceActionSwing.GetImpulseType(getParentSwing(2)!) == ImpulseType.Breakout
-                        && PriceActionSwing.GetCorrectionType(getParentSwing(1)!) != CorrectionType.Brokeback)
+                        && PriceActionSwing.GetCorrectionType(getParentSwing()!,
+                            getParentSwing(2)!.Leg1.EndElement) != CorrectionType.Brokeback)
                     {
                         if (IsTwoCloseBreak(getParentSwing(2)!))
                         {
