@@ -23,7 +23,7 @@ using StockSharp.Algo.Candles;
 using StockSharp.Xaml.Charting;
 using Ecng.Xaml;
 
-namespace StrategyMinimaMaxima
+namespace TradeCore
 {
     /// <summary>
     /// Interaction logic for MainWin.xaml

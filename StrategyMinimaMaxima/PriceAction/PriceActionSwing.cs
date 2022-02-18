@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace StrategyMinimaMaxima.PriceAction
+namespace TradeCore.PriceAction
 {
     public class PriceActionSwing
     {

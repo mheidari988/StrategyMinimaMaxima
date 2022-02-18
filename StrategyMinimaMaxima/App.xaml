@@ -1,7 +1,7 @@
-﻿<Application x:Class="StrategyMinimaMaxima.App"
+﻿<Application x:Class="TradeCore.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:StrategyMinimaMaxima"
+             xmlns:local="clr-namespace:TradeCore"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
          

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace StrategyMinimaMaxima.PriceAction.Signal
+namespace TradeCore.PriceAction.Signal
 {
     public class ParentSignalEventArgs : EventArgs
     {

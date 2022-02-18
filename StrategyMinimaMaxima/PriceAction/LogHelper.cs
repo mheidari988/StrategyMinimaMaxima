@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace StrategyMinimaMaxima.PriceAction
+namespace TradeCore.PriceAction
 {
     public static class LogHelper
     {

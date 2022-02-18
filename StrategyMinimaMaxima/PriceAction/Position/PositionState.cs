@@ -1,4 +1,4 @@
-﻿namespace StrategyMinimaMaxima.PriceAction.Position
+﻿namespace TradeCore.PriceAction.Position
 {
     public enum PositionState
     {

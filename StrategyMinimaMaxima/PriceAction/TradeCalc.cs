@@ -1,8 +1,8 @@
-﻿using StrategyMinimaMaxima.PriceAction.Position;
-using StrategyMinimaMaxima.PriceAction.Signal;
+﻿using TradeCore.PriceAction.Position;
+using TradeCore.PriceAction.Signal;
 using System;
 
-namespace StrategyMinimaMaxima.PriceAction
+namespace TradeCore.PriceAction
 {
     public static class TradeCalc
     {

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using StockSharp.Algo.Candles;
 
-namespace StrategyMinimaMaxima.PriceAction
+namespace TradeCore.PriceAction
 {
     public class PriceActionContainer
     {

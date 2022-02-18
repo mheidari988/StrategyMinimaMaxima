@@ -1,4 +1,4 @@
-﻿namespace StrategyMinimaMaxima.PriceAction
+﻿namespace TradeCore.PriceAction
 {
     public enum CorrectionType
     {

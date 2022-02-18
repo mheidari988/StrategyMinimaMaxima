@@ -1,12 +1,12 @@
 ﻿using StockSharp.Algo.Candles;
 using StockSharp.BusinessEntities;
-using StrategyMinimaMaxima.PriceAction.Position;
-using StrategyMinimaMaxima.PriceAction.Signal;
+using TradeCore.PriceAction.Position;
+using TradeCore.PriceAction.Signal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace StrategyMinimaMaxima.PriceAction
+namespace TradeCore.PriceAction
 {
     public class PriceActionProcessor
     {

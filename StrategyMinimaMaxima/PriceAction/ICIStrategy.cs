@@ -11,7 +11,7 @@ using StockSharp.Algo.Strategies.Protective;
 using StockSharp.BusinessEntities;
 using StockSharp.Messages;
 
-namespace StrategyMinimaMaxima.PriceAction
+namespace TradeCore.PriceAction
 {
     public class ICIStrategy : Strategy
     {

@@ -1,7 +1,7 @@
-﻿using StrategyMinimaMaxima.PriceAction.Signal;
+﻿using TradeCore.PriceAction.Signal;
 using System;
 
-namespace StrategyMinimaMaxima.PriceAction.Position
+namespace TradeCore.PriceAction.Position
 {
     public class PositionEntity
     {

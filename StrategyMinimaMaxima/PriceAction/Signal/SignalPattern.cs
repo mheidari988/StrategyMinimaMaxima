@@ -1,4 +1,4 @@
-﻿namespace StrategyMinimaMaxima.PriceAction.Signal
+﻿namespace TradeCore.PriceAction.Signal
 {
     public enum SignalPattern
     {

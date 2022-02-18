@@ -1,6 +1,6 @@
 ﻿using StockSharp.Algo.Candles;
 
-namespace StrategyMinimaMaxima.PriceAction
+namespace TradeCore.PriceAction
 {
     public class PriceActionElement
     {

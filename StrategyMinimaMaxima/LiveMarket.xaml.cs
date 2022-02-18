@@ -18,7 +18,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 
-namespace StrategyMinimaMaxima
+namespace TradeCore
 {
     /// <summary>
     /// Interaction logic for LiveMarket.xaml

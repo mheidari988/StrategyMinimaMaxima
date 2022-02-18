@@ -17,11 +17,11 @@ using StockSharp.Xaml;
 using StockSharp.Xaml.Charting;
 using System.Collections.Generic;
 using StockSharp.Algo;
-using StrategyMinimaMaxima.PriceAction;
-using StrategyMinimaMaxima.PriceAction.Signal;
+using TradeCore.PriceAction;
+using TradeCore.PriceAction.Signal;
 using System.Linq;
 
-namespace StrategyMinimaMaxima
+namespace TradeCore
 {
     public partial class MainWindow : Window
     {
