@@ -19,14 +19,20 @@ namespace StrategyMinimaMaxima.PriceAction
         private readonly PriceActionContainer ChildContainer = new PriceActionContainer();
         private PriceActionProcessor processor;
 
-        public CandleSeries ParentCandleSeries { get; private set; }
-        public CandleSeries ChildCandleSeries { get; private set; }
+        public CandleSeries ParentCandleSeries { get; }
+        public CandleSeries ChildCandleSeries { get; }
+        public CandleSeries MicroCandleSeries { get; }
         public PriceActionProcessor Processor { get => processor; private set => processor = value; }
 
-        public ICIStrategy(CandleSeries parentCandleSeries, CandleSeries childCandleSeries, long processLimit = 0)
+        public ICIStrategy(CandleSeries parentCandleSeries,
+                           CandleSeries childCandleSeries,
+                           CandleSeries microCandleSeries,
+                           long processLimit = 0)
         {
             ParentCandleSeries = parentCandleSeries;
             ChildCandleSeries = childCandleSeries;
+            MicroCandleSeries = microCandleSeries;
+            ParentContainer.CapacityControl = true;
             ParentContainer.ProcessLimit = processLimit;
             ChildContainer.ProcessLimit = processLimit * 4;
             processor = new PriceActionProcessor(ParentContainer, ChildContainer);
@@ -48,6 +54,7 @@ namespace StrategyMinimaMaxima.PriceAction
         {
             Connector.SubscribeCandles(ChildCandleSeries);
             Connector.SubscribeCandles(ParentCandleSeries);
+            Connector.SubscribeCandles(MicroCandleSeries);
 
             Connector.CandleSeriesProcessing += Connector_CandleSeriesProcessing;
 
@@ -77,6 +84,17 @@ namespace StrategyMinimaMaxima.PriceAction
                 {
                     ChildContainer.AddCandle(candle);
                     Processor.ChildContainer = ChildContainer;
+                }
+            }
+
+            //----------------------------------------------------------------------------
+            //--- Pass micro candles to processor to evaluate positions on lower times ---
+            //----------------------------------------------------------------------------
+            if (((TimeFrameCandle)candle).TimeFrame == TimeSpan.FromMinutes(1))
+            {
+                if (candle.State == CandleStates.Finished)
+                {
+                    ChildContainer.AddMicroCandle(candle);
                 }
             }
         }

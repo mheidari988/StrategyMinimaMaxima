@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace StrategyMinimaMaxima.PriceAction.Signal
 {
-    public class ParentPatternEventArgs : EventArgs
+    public class ParentSignalEventArgs : EventArgs
     {
-        public ParentPatternType ParentPatternType { get; set; } = ParentPatternType.None;
+        public SignalPattern ParentPatternType { get; set; } = SignalPattern.None;
         public PriceActionContainer? ParentContainer { get; set; }
         public decimal ImpulseSlope { get; init; }
     }

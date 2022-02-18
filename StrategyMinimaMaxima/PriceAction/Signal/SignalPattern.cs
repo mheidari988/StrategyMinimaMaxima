@@ -1,6 +1,6 @@
 ﻿namespace StrategyMinimaMaxima.PriceAction.Signal
 {
-    public enum ParentPatternType
+    public enum SignalPattern
     {
         None = 0,
         Bearish_ICI_CIC = 1,

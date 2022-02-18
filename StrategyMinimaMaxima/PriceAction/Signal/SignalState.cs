@@ -2,11 +2,13 @@
 {
     public enum SignalState
     {
-        Ready = 0,
-        EntryHitted = 1,
-        StopHitted = 2,
-        RiskFreeHitted = 3,
-        BreakEvenHitted = 4,
-        TakeProfitHitted = 5
+        None = 0,
+        Ready = 1,
+        EntryHitted = 2,
+        StopHitted = 3,
+        RiskFreeHitted = 4,
+        BreakEvenHitted = 5,
+        TakeProfitHitted = 6,
+        MissedOut = 7
     }
 }

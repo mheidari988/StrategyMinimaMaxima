@@ -19,13 +19,14 @@ namespace StrategyMinimaMaxima.PriceAction
                     return CandleMomentumType.Bearish;
             }
         }
+
         public MomentumType MomentumType { get; set; }
 
         public HighLowType HighLowType { get; set; }
 
         public PeakValleyType PeakValleyType { get; set; }
 
-        public Candle? Candle { get; private set; }
+        public Candle Candle { get; private set; }
 
         public override string ToString()
         {

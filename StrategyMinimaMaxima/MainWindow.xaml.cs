@@ -23,19 +23,17 @@ using System.Linq;
 
 namespace StrategyMinimaMaxima
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
         private int _report_temp_counter;
+        private int _signal_temp_counter;
         private HistoryEmulationConnector _connector;
         private ChartCandleElement _candleElement;
         private ChartTradeElement _tradesElem;
 
-        private CandleSeries _candleSeries_1h;
-        private CandleSeries _candleSeries_15m;
-        private CandleSeries _candleSeries_1m;
+        private CandleSeries parentCandleSeries;
+        private CandleSeries childCandleSeries;
+        private CandleSeries microCandleSeries;
 
         private Security _security;
         private Portfolio _portfolio;
@@ -99,12 +97,17 @@ namespace StrategyMinimaMaxima
             //.................add connector to the log manager...................
             _logManager.Sources.Add(_connector);
 
-            _candleSeries_15m = new CandleSeries(typeof(TimeFrameCandle), _security, TimeSpan.FromMinutes(15))
+            microCandleSeries = new CandleSeries(typeof(TimeFrameCandle), _security, TimeSpan.FromMinutes(1))
             {
                 BuildCandlesMode = MarketDataBuildModes.Load
             };
 
-            _candleSeries_1h = new CandleSeries(typeof(TimeFrameCandle), _security, TimeSpan.FromMinutes(60))
+            childCandleSeries = new CandleSeries(typeof(TimeFrameCandle), _security, TimeSpan.FromMinutes(15))
+            {
+                BuildCandlesMode = MarketDataBuildModes.Load
+            };
+
+            parentCandleSeries = new CandleSeries(typeof(TimeFrameCandle), _security, TimeSpan.FromMinutes(60))
             {
                 BuildCandlesMode = MarketDataBuildModes.Load
             };
@@ -120,7 +123,10 @@ namespace StrategyMinimaMaxima
             _connector.NewOrder += OrderGrid.Orders.Add;
             _connector.OrderRegisterFailed += OrderGrid.AddRegistrationFail;
 
-            iciStrategy = new ICIStrategy(_candleSeries_1h, _candleSeries_15m, long.Parse(txtProcessLimit.Text) + 1) // +1 is for TradingView
+            iciStrategy = new ICIStrategy(parentCandleSeries,
+                                          childCandleSeries,
+                                          microCandleSeries,
+                                          long.Parse(txtProcessLimit.Text) + 1) // +1 is for TradingView
             {
                 Security = _security,
                 Connector = _connector,
@@ -144,6 +150,7 @@ namespace StrategyMinimaMaxima
             txtReportLeft.Text = "";
             txtReportRight.Text = "";
             _report_temp_counter = 0;
+            _signal_temp_counter = 0;
         }
         private void InitChart()
         {
@@ -185,10 +192,20 @@ namespace StrategyMinimaMaxima
         {
             iciStrategy.Processor.BullishICI += Processor_BullishICI;
             iciStrategy.Processor.BearishICI += Processor_BearishICI;
-            iciStrategy.Processor.SignalPatternChanged += Processor_SignalPatternChanged;
+            iciStrategy.Processor.ChildSignalChanged += Processor_ChildSignalChanged;
+            iciStrategy.Processor.ParentChanged += Processor_ParentChanged;
             iciStrategy.Start();
             _connector.Start();
         }
+
+        private void Processor_ParentChanged(object? sender, PriceActionContainer e)
+        {
+            Dispatcher.Invoke(new Action(() =>
+            {
+                Title = e?.Swings.Count.ToString();
+            }));
+        }
+
         private void Connector_CandleSeriesProcessing(CandleSeries candleSeries, Candle candle)
         {
             if (((TimeFrameCandle)candle).TimeFrame == TimeSpan.FromMinutes(60))
@@ -196,38 +213,40 @@ namespace StrategyMinimaMaxima
                 Chart.Draw(_candleElement, candle);
             }
         }
-
-        private void Processor_SignalPatternChanged(object? sender, ParentPatternEventArgs e)
-        {
-            Dispatcher.Invoke(new Action(() =>
-            {
-                txtReportLeft.Text += $"{++_report_temp_counter}-Signal Pattern Changed: {e.ParentPatternType}" +
-                $"{Environment.NewLine}";
-            }));
-        }
-
-        private void Processor_BearishICI(object? sender, ParentPatternEventArgs e)
+        private void Processor_BearishICI(object? sender, ParentSignalEventArgs e)
         {
             Dispatcher.Invoke(new Action(() =>
             {
                 txtReportRight.Text += $"{++_report_temp_counter}-{e.ParentPatternType}: " +
-                $"{ e.ParentContainer.Candles.LastOrDefault()!.OpenTime:dd-MM-yyyy @ HH:mm}" +
+                $"{ e.ParentContainer!.Candles.LastOrDefault()!.OpenTime:dd-MM-yyyy @ HH:mm}" +
                 $"{Environment.NewLine}Slope = {Math.Abs(e.ImpulseSlope)}{Environment.NewLine}";
                 txtPriceActionReport.ScrollToEnd();
             }));
         }
-
-        private void Processor_BullishICI(object? sender, ParentPatternEventArgs e)
+        private void Processor_BullishICI(object? sender, ParentSignalEventArgs e)
         {
             Dispatcher.Invoke(new Action(() =>
             {
                 txtReportRight.Text += $"{++_report_temp_counter}-{e.ParentPatternType}: " +
-                $"{ e.ParentContainer.Candles.LastOrDefault()!.OpenTime:dd-MM-yyyy @ HH:mm}" +
+                $"{ e.ParentContainer!.Candles.LastOrDefault()!.OpenTime:dd-MM-yyyy @ HH:mm}" +
                 $"{Environment.NewLine}Slope = {Math.Abs(e.ImpulseSlope)}{Environment.NewLine}";
                 txtPriceActionReport.ScrollToEnd();
             }));
         }
-
+        private void Processor_ChildSignalChanged(object? sender, SignalEntity? e)
+        {
+            if (e is not null)
+                Dispatcher.Invoke(new Action(() =>
+                {
+                    txtReportLeft.Text += $"{++_signal_temp_counter}- " +
+                    $"Signal @ {e.ChildContainer!.Candles.LastOrDefault()!.OpenTime:dd-MM-yyy @ HH:mm}{Environment.NewLine}" +
+                    $"Signal Direction: {e.SignalDirection}{Environment.NewLine}" +
+                    $"Entry : {Math.Round(e.EntryPoint, 2)}{Environment.NewLine}" +
+                    $"Take : {Math.Round(e.TakeProfit, 2)}{Environment.NewLine}"+
+                    $"Stop : {e.StopLoss}{Environment.NewLine}";
+                    txtReportLeft.ScrollToEnd();
+                }));
+        }
         private void btnOpenMainClicked(object sender, RoutedEventArgs e)
         {
             MainWin win = new MainWin();
@@ -248,7 +267,7 @@ namespace StrategyMinimaMaxima
 
         private void btnGetLeg3Childs_Click(object sender, RoutedEventArgs e)
         {
-            string report = ((ICIStrategy)iciStrategy).GetChildReport(LegStatus.Leg3, int.Parse(txtParentLevel.Text));
+            string report = iciStrategy.GetChildReport(LegStatus.Leg3, int.Parse(txtParentLevel.Text));
             txtPriceActionReport.Text = report != string.Empty ? report : "[NO DATA AVAILABLE]";
         }
 
@@ -268,6 +287,17 @@ namespace StrategyMinimaMaxima
         {
             string report = ((ICIStrategy)iciStrategy).GetChildReport(LegStatus.Leg3, int.Parse(txtParentLevel.Text), true);
             txtPriceActionReport.Text = report != string.Empty ? report : "[NO DATA AVAILABLE]";
+        }
+        
+        private void btnHistoryReport_Click(object sender, RoutedEventArgs e)
+        {
+            txtReportLeft2.Text = iciStrategy.Processor.PositionHistory.Sum(x => x.GetRRResult()).ToString();
+            foreach (var item in iciStrategy.Processor.PositionHistory)
+            {
+                txtReportLeft2.Text += $"Dir:{item.SignalDirection}\n" +
+                    $"State:{item?.PositionState}\n" +
+                    $"Result:{item?.GetRRResult()}\n\n";
+            }
         }
     }
 }

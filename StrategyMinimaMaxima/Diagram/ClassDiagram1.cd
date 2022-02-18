@@ -17,7 +17,7 @@
   <Class Name="StrategyMinimaMaxima.PriceAction.PriceActionContainer">
     <Position X="11.5" Y="0.5" Width="2.75" />
     <TypeIdentifier>
-      <HashCode>IEAAAAAAYAIAAAAAgAAQAAIAAAAAAAAAQAAAYCAAAIA=</HashCode>
+      <HashCode>IEAAAAAAYAoAAAQAgAAQAAIAAAAAAAAAQAAAYCAAAIA=</HashCode>
       <FileName>PriceAction\PriceActionContainer.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -38,7 +38,7 @@
   <Class Name="StrategyMinimaMaxima.PriceAction.PriceActionProcessor">
     <Position X="5.25" Y="7.25" Width="3.5" />
     <TypeIdentifier>
-      <HashCode>EAAAAAAIBAAAIAAAACAAAAAAAAQAAAAAAAAkCAAEAAA=</HashCode>
+      <HashCode>EAAAAAAIBAAA4EAEACAAAEEAAIRAAAAAAAAmCABUAAA=</HashCode>
       <FileName>PriceAction\PriceActionProcessor.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -47,6 +47,34 @@
     <TypeIdentifier>
       <HashCode>ABAAAAAAAAAAAAAAAAAAIAABEAAAAAAAAgAAAAAAAAA=</HashCode>
       <FileName>PriceAction\LogHelper.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="StrategyMinimaMaxima.PriceAction.StatisticsExtensions">
+    <Position X="15.25" Y="7.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAA=</HashCode>
+      <FileName>PriceAction\StatisticsExtensions.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="StrategyMinimaMaxima.PriceAction.Signal.ParentPatternEventArgs">
+    <Position X="15.25" Y="5.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAEAAAEAAA=</HashCode>
+      <FileName>PriceAction\Signal\ParentPatternEventArgs.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="StrategyMinimaMaxima.PriceAction.Signal.SignalEntity">
+    <Position X="17" Y="7" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAICCAAAMAAAAAAAAAAAAAAAAAAAAQAAAAAEgAAAAAA=</HashCode>
+      <FileName>PriceAction\Signal\SignalEntity.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="StrategyMinimaMaxima.PriceAction.ICIStrategy">
+    <Position X="10.5" Y="7.25" Width="3" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAQAIAABAACAAQAAAAAAAACAAAAAEAAAEAAA=</HashCode>
+      <FileName>PriceAction\ICIStrategy.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Enum Name="StrategyMinimaMaxima.PriceAction.MomentumType">
@@ -96,6 +124,27 @@
     <TypeIdentifier>
       <HashCode>YAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABA=</HashCode>
       <FileName>PriceAction\LegStatus.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="StrategyMinimaMaxima.PriceAction.Signal.ParentPatternType">
+    <Position X="18.75" Y="5.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQgAAAAAAACBAAAAAABAAAAAAAAAAAAEAAAAAEAAAA=</HashCode>
+      <FileName>PriceAction\Signal\ParentPatternType.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="StrategyMinimaMaxima.PriceAction.Signal.SignalDirection">
+    <Position X="17" Y="5.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAIAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>PriceAction\Signal\SignalDirection.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="StrategyMinimaMaxima.PriceAction.Signal.SignalState">
+    <Position X="18.75" Y="8" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAEAAAAAAAAACAEAAAIAAAAAAAgAAAAAAAABAAAAAAA=</HashCode>
+      <FileName>PriceAction\Signal\SignalState.cs</FileName>
     </TypeIdentifier>
   </Enum>
   <Font Name="Segoe UI" Size="9" />

@@ -1,4 +1,6 @@
 ﻿using StockSharp.Algo.Candles;
+using StockSharp.BusinessEntities;
+using StrategyMinimaMaxima.PriceAction.Position;
 using StrategyMinimaMaxima.PriceAction.Signal;
 using System;
 using System.Collections.Generic;
@@ -10,30 +12,29 @@ namespace StrategyMinimaMaxima.PriceAction
     {
         private PriceActionContainer? parentContainer;
         private PriceActionContainer? childContainer;
+        
         private decimal lastImpulseSlope;
 
+        #region Events
         public event EventHandler<PriceActionContainer>? ParentChanged;
         public event EventHandler<PriceActionContainer>? ChildChanged;
-        public event EventHandler<ParentPatternEventArgs>? SignalPatternChanged;
-        public event EventHandler<ParentPatternEventArgs>? BullishICI;
-        public event EventHandler<ParentPatternEventArgs>? BearishICI;
-        public event EventHandler<SignalEntity>? BullishSignal;
-        public event EventHandler<SignalEntity>? BearishSignal;
-
+        public event EventHandler<ParentSignalEventArgs>? ParentSignalChanged;
+        public event EventHandler<ParentSignalEventArgs>? BullishICI;
+        public event EventHandler<ParentSignalEventArgs>? BearishICI;
+        public event EventHandler<SignalEntity?>? ChildSignalChanged;
+        public event EventHandler<SignalEntity?>? BullishICISignal;
+        public event EventHandler<SignalEntity?>? BearishICISignal;
+        #endregion
 
         #region Constructors
 
-        public PriceActionProcessor(PriceActionContainer parent, PriceActionContainer child)
+        public PriceActionProcessor(PriceActionContainer parent,
+                                    PriceActionContainer child,
+                                    int hierarchy = 4)
         {
             ParentContainer = parent ?? throw new ArgumentNullException(nameof(parent));
             ChildContainer = child ?? throw new ArgumentNullException(nameof(child));
-            Hierarchy = 4;
-        }
-
-        public PriceActionProcessor(PriceActionContainer parent, PriceActionContainer child, int hierarchy = 4)
-        {
-            ParentContainer = parent ?? throw new ArgumentNullException(nameof(parent));
-            ChildContainer = child ?? throw new ArgumentNullException(nameof(child));
+            ChildContainer.MicroCandleChanged += ChildContainer_MicroCandleChanged;
             Hierarchy = hierarchy;
         }
 
@@ -42,14 +43,13 @@ namespace StrategyMinimaMaxima.PriceAction
         #region Properties
 
         public decimal LastImpulseSlope { get => lastImpulseSlope; private set => lastImpulseSlope = Math.Round(value, 5); }
-
         public PriceActionContainer? ParentContainer
         {
             get => parentContainer;
             set
             {
                 parentContainer = value;
-                parentChanged();
+                WhenParentChanged();
             }
         }
         public PriceActionContainer? ChildContainer
@@ -58,11 +58,15 @@ namespace StrategyMinimaMaxima.PriceAction
             set
             {
                 childContainer = value;
-                childChanged();
+                WhenChildChanged();
             }
         }
         public int Hierarchy { get; set; }
-        public ParentPatternType CurrentPattern { get; private set; } = ParentPatternType.None;
+        public SignalPattern CurrentSignalPattern { get; private set; } = SignalPattern.None;
+        public SignalEntity? CurrentSignal { get; private set; }
+        public List<PositionEntity> PositionHistory { get; } = new();
+        public decimal RiskReward { get; set; } = 3M;
+        public bool CheckTwoCloseBreak { get; set; } = false;
 
         #endregion
 
@@ -99,7 +103,7 @@ namespace StrategyMinimaMaxima.PriceAction
                                                where child.HighPrice == pHigh
                                                select child.SeqNum).Last();
 
-                                return generateChildList(openEnd, cStartSeq, cEndSeq);
+                                return GenerateChildList(openEnd, cStartSeq, cEndSeq);
                             }
                             catch (InvalidOperationException)
                             {
@@ -120,7 +124,7 @@ namespace StrategyMinimaMaxima.PriceAction
                                                where child.LowPrice == pLow
                                                select child.SeqNum).Last();
 
-                                return generateChildList(openEnd, cStartSeq, cEndSeq);
+                                return GenerateChildList(openEnd, cStartSeq, cEndSeq);
                             }
                             catch (InvalidOperationException)
                             {
@@ -151,7 +155,7 @@ namespace StrategyMinimaMaxima.PriceAction
                                                where child.HighPrice == pHigh
                                                select child.SeqNum).Last();
 
-                                return generateChildList(openEnd, cStartSeq, cEndSeq);
+                                return GenerateChildList(openEnd, cStartSeq, cEndSeq);
                             }
                             catch (InvalidOperationException)
                             {
@@ -172,7 +176,7 @@ namespace StrategyMinimaMaxima.PriceAction
                                                where child.LowPrice == pLow
                                                select child.SeqNum).Last();
 
-                                return generateChildList(openEnd, cStartSeq, cEndSeq);
+                                return GenerateChildList(openEnd, cStartSeq, cEndSeq);
                             }
                             catch (InvalidOperationException)
                             {
@@ -203,7 +207,7 @@ namespace StrategyMinimaMaxima.PriceAction
                                                where child.HighPrice == pHigh
                                                select child.SeqNum).Last();
 
-                                return generateChildList(openEnd, cStartSeq, cEndSeq);
+                                return GenerateChildList(openEnd, cStartSeq, cEndSeq);
                             }
                             catch (InvalidOperationException)
                             {
@@ -225,7 +229,7 @@ namespace StrategyMinimaMaxima.PriceAction
                                                where child.LowPrice == pLow
                                                select child.SeqNum).Last();
 
-                                return generateChildList(openEnd, cStartSeq, cEndSeq);
+                                return GenerateChildList(openEnd, cStartSeq, cEndSeq);
                             }
                             catch (InvalidOperationException)
                             {
@@ -249,8 +253,570 @@ namespace StrategyMinimaMaxima.PriceAction
 
         #region Private Methods
 
-        private bool IsTwoCloseBreak(PriceActionSwing swing)
+        private void WhenParentChanged()
         {
+            if (parentContainer is not null)
+            {
+                if (parentContainer.Swings.Count >= 4)
+                {
+                    //---------------------------------------------------------------
+                    //--- LEVEL 1 : Two swing scenario in Bullish and Bearish ICI ---
+                    //---------------------------------------------------------------
+                    if ((GetParentSwing(1)!.PatternType == PatternType.BullishICI
+                        || GetParentSwing(1)!.PatternType == PatternType.BullishCII)
+                        && GetParentSwing()!.PatternType == PatternType.BullishCIC
+                        && PriceActionSwing.GetImpulseType(GetParentSwing(1)!) == ImpulseType.Breakout
+                        && PriceActionSwing.GetCorrectionType(GetParentSwing()!) != CorrectionType.Brokeback)
+                    {
+                        if (ValidateTwoCloseBreak(GetParentSwing(1)!))
+                        {
+                            if (CurrentSignalPattern != SignalPattern.Bullish_ICI_CIC)
+                            {
+                                CurrentSignalPattern = SignalPattern.Bullish_ICI_CIC;
+
+                                if (GetParentSwing(1)!.PatternType == PatternType.BullishICI)
+                                    LastImpulseSlope = parentContainer.GetSlope(
+                                        GetParentSwing(1)!.Leg3.BeginElement.Candle!.SeqNum,
+                                        GetParentSwing(1)!.Leg3.EndElement.Candle!.SeqNum, MomentumType.Bullish);
+                                else if (GetParentSwing(1)!.PatternType == PatternType.BullishCII)
+                                    LastImpulseSlope = parentContainer.GetSlope(
+                                        GetParentSwing(1)!.Leg2.BeginElement.Candle!.SeqNum,
+                                        GetParentSwing(1)!.Leg2.EndElement.Candle!.SeqNum, MomentumType.Bullish);
+
+
+                                ParentSignalChanged?.Invoke(this, new ParentSignalEventArgs
+                                {
+                                    ParentPatternType = CurrentSignalPattern,
+                                    ParentContainer = parentContainer,
+                                });
+                            }
+                            BullishICI?.Invoke(this, new ParentSignalEventArgs
+                            {
+                                ParentPatternType = CurrentSignalPattern,
+                                ParentContainer = parentContainer,
+                                ImpulseSlope = LastImpulseSlope
+                            });
+                        }
+                    }
+                    else if ((GetParentSwing(1)!.PatternType == PatternType.BearishICI
+                        || GetParentSwing(1)!.PatternType == PatternType.BearishCII)
+                        && GetParentSwing()!.PatternType == PatternType.BearishCIC
+                        && PriceActionSwing.GetImpulseType(GetParentSwing(1)!) == ImpulseType.Breakout
+                        && PriceActionSwing.GetCorrectionType(GetParentSwing()!) != CorrectionType.Brokeback)
+                    {
+                        if (ValidateTwoCloseBreak(GetParentSwing(1)!))
+                        {
+                            if (CurrentSignalPattern != SignalPattern.Bearish_ICI_CIC)
+                            {
+                                CurrentSignalPattern = SignalPattern.Bearish_ICI_CIC;
+
+                                if (GetParentSwing(1)!.PatternType == PatternType.BearishICI)
+                                    LastImpulseSlope = parentContainer.GetSlope(
+                                        GetParentSwing(1)!.Leg3.BeginElement.Candle!.SeqNum,
+                                        GetParentSwing(1)!.Leg3.EndElement.Candle!.SeqNum, MomentumType.Bearish);
+                                else if (GetParentSwing(1)!.PatternType == PatternType.BearishCII)
+                                    LastImpulseSlope = parentContainer.GetSlope(
+                                        GetParentSwing(1)!.Leg2.BeginElement.Candle!.SeqNum,
+                                        GetParentSwing(1)!.Leg2.EndElement.Candle!.SeqNum, MomentumType.Bearish);
+
+                                ParentSignalChanged?.Invoke(this, new ParentSignalEventArgs
+                                {
+                                    ParentPatternType = CurrentSignalPattern,
+                                    ParentContainer = parentContainer,
+                                });
+                            }
+                            BearishICI?.Invoke(this, new ParentSignalEventArgs
+                            {
+                                ParentPatternType = CurrentSignalPattern,
+                                ParentContainer = parentContainer,
+                                ImpulseSlope = LastImpulseSlope
+                            });
+                        }
+                    }
+                    //-----------------------------------------------------------------
+                    //--- LEVEL 2 : Three swing scenario in Bullish and Bearish ICI ---
+                    //-----------------------------------------------------------------
+                    else if ((GetParentSwing(2)!.PatternType == PatternType.BullishICI
+                        || GetParentSwing(2)!.PatternType == PatternType.BullishCII)
+                        && GetParentSwing(1)!.PatternType == PatternType.BullishCIC
+                        && GetParentSwing()!.PatternType == PatternType.BullishICC
+                        && PriceActionSwing.GetImpulseType(GetParentSwing(2)!) == ImpulseType.Breakout
+                        && PriceActionSwing.GetCorrectionType(GetParentSwing()!,
+                            GetParentSwing(2)!.Leg1.EndElement) != CorrectionType.Brokeback)
+                    {
+                        if (ValidateTwoCloseBreak(GetParentSwing(2)!))
+                        {
+                            if (CurrentSignalPattern != SignalPattern.Bullish_ICI_CIC_ICC)
+                            {
+                                CurrentSignalPattern = SignalPattern.Bullish_ICI_CIC_ICC;
+
+                                if (GetParentSwing(2)!.PatternType == PatternType.BullishICI)
+                                    LastImpulseSlope = parentContainer.GetSlope(
+                                        GetParentSwing(2)!.Leg3.BeginElement.Candle!.SeqNum,
+                                        GetParentSwing(2)!.Leg3.EndElement.Candle!.SeqNum, MomentumType.Bullish);
+                                else if (GetParentSwing(2)!.PatternType == PatternType.BullishCII)
+                                    LastImpulseSlope = parentContainer.GetSlope(
+                                        GetParentSwing(2)!.Leg2.BeginElement.Candle!.SeqNum,
+                                        GetParentSwing(2)!.Leg2.EndElement.Candle!.SeqNum, MomentumType.Bullish);
+
+                                ParentSignalChanged?.Invoke(this, new ParentSignalEventArgs
+                                {
+                                    ParentPatternType = CurrentSignalPattern,
+                                    ParentContainer = parentContainer,
+                                });
+                            }
+                            BullishICI?.Invoke(this, new ParentSignalEventArgs
+                            {
+                                ParentPatternType = CurrentSignalPattern,
+                                ParentContainer = parentContainer,
+                                ImpulseSlope = LastImpulseSlope
+                            });
+                        }
+                    }
+                    else if ((GetParentSwing(2)!.PatternType == PatternType.BearishICI
+                        || GetParentSwing(2)!.PatternType == PatternType.BearishCII)
+                        && GetParentSwing(1)!.PatternType == PatternType.BearishCIC
+                        && GetParentSwing()!.PatternType == PatternType.BearishICC
+                        && PriceActionSwing.GetImpulseType(GetParentSwing(2)!) == ImpulseType.Breakout
+                        && PriceActionSwing.GetCorrectionType(GetParentSwing()!,
+                            GetParentSwing(2)!.Leg1.EndElement) != CorrectionType.Brokeback)
+                    {
+                        if (ValidateTwoCloseBreak(GetParentSwing(2)!))
+                        {
+                            if (CurrentSignalPattern != SignalPattern.Bearish_ICI_CIC_ICC)
+                            {
+                                CurrentSignalPattern = SignalPattern.Bearish_ICI_CIC_ICC;
+
+                                if (GetParentSwing(2)!.PatternType == PatternType.BearishICI)
+                                    LastImpulseSlope = parentContainer.GetSlope(
+                                        GetParentSwing(2)!.Leg3.BeginElement.Candle!.SeqNum,
+                                        GetParentSwing(2)!.Leg3.EndElement.Candle!.SeqNum, MomentumType.Bearish);
+                                else if (GetParentSwing(2)!.PatternType == PatternType.BearishCII)
+                                    LastImpulseSlope = parentContainer.GetSlope(
+                                        GetParentSwing(2)!.Leg2.BeginElement.Candle!.SeqNum,
+                                        GetParentSwing(2)!.Leg2.EndElement.Candle!.SeqNum, MomentumType.Bearish);
+
+                                ParentSignalChanged?.Invoke(this, new ParentSignalEventArgs
+                                {
+                                    ParentPatternType = CurrentSignalPattern,
+                                    ParentContainer = parentContainer,
+                                });
+                            }
+                            BearishICI?.Invoke(this, new ParentSignalEventArgs
+                            {
+                                ParentPatternType = CurrentSignalPattern,
+                                ParentContainer = parentContainer,
+                                ImpulseSlope = LastImpulseSlope
+                            });
+                        }
+                    }
+                    //-----------------------------------------------------------------
+                    //--- LEVEL 3 : Four swing scenario in Bullish and Bearish ICI ----
+                    //-----------------------------------------------------------------
+                    else if ((GetParentSwing(3)!.PatternType == PatternType.BullishICI
+                        || GetParentSwing(3)!.PatternType == PatternType.BullishCII)
+                        && GetParentSwing(2)!.PatternType == PatternType.BullishCIC
+                        && GetParentSwing(1)!.PatternType == PatternType.BullishICC
+                        & GetParentSwing()!.PatternType == PatternType.BearishICC
+                        && PriceActionSwing.GetImpulseType(GetParentSwing(3)!) == ImpulseType.Breakout
+                        && PriceActionSwing.GetCorrectionType(GetParentSwing(2)!) != CorrectionType.Brokeback)
+                    {
+                        if (ValidateTwoCloseBreak(GetParentSwing(3)!))
+                        {
+                            if (CurrentSignalPattern != SignalPattern.Bullish_ICI_CIC_T_ICC)
+                            {
+                                CurrentSignalPattern = SignalPattern.Bullish_ICI_CIC_T_ICC;
+
+                                if (GetParentSwing(3)!.PatternType == PatternType.BullishICI)
+                                    LastImpulseSlope = parentContainer.GetSlope(
+                                        GetParentSwing(3)!.Leg3.BeginElement.Candle!.SeqNum,
+                                        GetParentSwing(3)!.Leg3.EndElement.Candle!.SeqNum, MomentumType.Bullish);
+                                else if (GetParentSwing(3)!.PatternType == PatternType.BullishCII)
+                                    LastImpulseSlope = parentContainer.GetSlope(
+                                        GetParentSwing(3)!.Leg2.BeginElement.Candle!.SeqNum,
+                                        GetParentSwing(3)!.Leg2.EndElement.Candle!.SeqNum, MomentumType.Bullish);
+
+                                ParentSignalChanged?.Invoke(this, new ParentSignalEventArgs
+                                {
+                                    ParentPatternType = CurrentSignalPattern,
+                                    ParentContainer = parentContainer,
+                                });
+                            }
+                            BullishICI?.Invoke(this, new ParentSignalEventArgs
+                            {
+                                ParentPatternType = CurrentSignalPattern,
+                                ParentContainer = parentContainer,
+                                ImpulseSlope = LastImpulseSlope
+                            });
+                        }
+                    }
+                    else if ((GetParentSwing(3)!.PatternType == PatternType.BearishICI
+                        || GetParentSwing(3)!.PatternType == PatternType.BearishCII)
+                        && GetParentSwing(2)!.PatternType == PatternType.BearishCIC
+                        && GetParentSwing(1)!.PatternType == PatternType.BearishICC
+                        && GetParentSwing()!.PatternType==PatternType.BullishICC
+                        && PriceActionSwing.GetImpulseType(GetParentSwing(3)!) == ImpulseType.Breakout
+                        && PriceActionSwing.GetCorrectionType(GetParentSwing(2)!) != CorrectionType.Brokeback)
+                    {
+                        if (ValidateTwoCloseBreak(GetParentSwing(3)!))
+                        {
+                            if (CurrentSignalPattern != SignalPattern.Bearish_ICI_CIC_T_ICC)
+                            {
+                                CurrentSignalPattern = SignalPattern.Bearish_ICI_CIC_T_ICC;
+
+                                if (GetParentSwing(3)!.PatternType == PatternType.BearishICI)
+                                    LastImpulseSlope = parentContainer.GetSlope(
+                                        GetParentSwing(3)!.Leg3.BeginElement.Candle!.SeqNum,
+                                        GetParentSwing(3)!.Leg3.EndElement.Candle!.SeqNum, MomentumType.Bearish);
+                                else if (GetParentSwing(3)!.PatternType == PatternType.BearishCII)
+                                    LastImpulseSlope = parentContainer.GetSlope(
+                                        GetParentSwing(3)!.Leg2.BeginElement.Candle!.SeqNum,
+                                        GetParentSwing(3)!.Leg2.EndElement.Candle!.SeqNum, MomentumType.Bearish);
+
+                                ParentSignalChanged?.Invoke(this, new ParentSignalEventArgs
+                                {
+                                    ParentPatternType = CurrentSignalPattern,
+                                    ParentContainer = parentContainer,
+                                });
+                            }
+                            BearishICI?.Invoke(this, new ParentSignalEventArgs
+                            {
+                                ParentPatternType = CurrentSignalPattern,
+                                ParentContainer = parentContainer,
+                                ImpulseSlope = LastImpulseSlope
+                            });
+                        }
+                    }
+                    else
+                    {
+                        CurrentSignalPattern = SignalPattern.None;
+                        ParentSignalChanged?.Invoke(this, new ParentSignalEventArgs
+                        {
+                            ParentPatternType = CurrentSignalPattern,
+                            ParentContainer = parentContainer,
+                            ImpulseSlope = 0
+                        });
+                    }
+                }
+                ParentChanged?.Invoke(this, parentContainer);
+            }
+        }
+        private void WhenChildChanged()
+        {
+            if (ChildContainer is null) throw new ArgumentNullException(nameof(ChildContainer));
+            if (ParentContainer is null) throw new ArgumentNullException(nameof(ParentContainer));
+
+            if (CurrentSignalPattern == SignalPattern.Bearish_ICI_CIC)
+            {
+                var childSwings = GetChildSwings(LegStatus.Leg3, openEnd: true);
+                if (childSwings is null) return;
+
+                var lastICI = childSwings.LastOrDefault();
+
+                if (lastICI is not null
+                    && lastICI.PatternType == PatternType.BearishICI
+                    && PriceActionSwing.GetImpulseType(lastICI) == ImpulseType.Breakout)
+                {
+                    decimal stop = lastICI.Leg3.BeginElement.Candle.HighPrice;
+                    decimal take = TradeCalc.T272(
+                            GetParentSwing()!.Leg3.EndElement.Candle.HighPrice,
+                            GetParentSwing()!.Leg3.BeginElement.Candle.LowPrice);
+                    decimal entry = TradeCalc.GetEntryByRR(stop, take, RiskReward)
+                        < lastICI.Leg3.EndElement.Candle.ClosePrice
+                        ? lastICI.Leg3.EndElement.Candle.ClosePrice
+                        : TradeCalc.GetEntryByRR(stop, take, RiskReward);
+
+                    var signal = new SignalEntity
+                    {
+                        Id = Guid.NewGuid(),
+                        SignalDirection = SignalDirection.Sell,
+                        SignalPattern = CurrentSignalPattern,
+                        StopLoss = stop,
+                        TakeProfit = take,
+                        EntryPoint = entry,
+                        ParentContainer = ParentContainer,
+                        ChildContainer = ChildContainer
+                    };
+
+                    if (CurrentSignal is null)
+                    {
+                        CurrentSignal = signal;
+                        CurrentSignal.SignalState = SignalState.Ready;
+                        ChildSignalChanged?.Invoke(this, signal);
+                    }
+
+                    BearishICISignal?.Invoke(this, signal);
+                }
+            }
+            else if (CurrentSignalPattern == SignalPattern.Bearish_ICI_CIC_ICC)
+            {
+                var childSwings = GetChildSwings(LegStatus.Leg2, openEnd: true);
+                if (childSwings is null) return;
+                var lastICI = childSwings.LastOrDefault();
+
+                if (lastICI is not null
+                    && lastICI.PatternType == PatternType.BearishICI
+                    && PriceActionSwing.GetImpulseType(lastICI) == ImpulseType.Breakout)
+                {
+                    decimal stop = lastICI.Leg3.BeginElement.Candle.HighPrice;
+                    decimal take = TradeCalc.T272(
+                            GetParentSwing()!.Leg2.EndElement.Candle.HighPrice,
+                            GetParentSwing()!.Leg2.BeginElement.Candle.LowPrice);
+                    decimal entry = TradeCalc.GetEntryByRR(stop, take, RiskReward)
+                        < lastICI.Leg3.EndElement.Candle.ClosePrice
+                        ? lastICI.Leg3.EndElement.Candle.ClosePrice
+                        : TradeCalc.GetEntryByRR(stop, take, RiskReward);
+
+                    var signal = new SignalEntity
+                    {
+                        Id = Guid.NewGuid(),
+                        SignalDirection = SignalDirection.Sell,
+                        SignalPattern = CurrentSignalPattern,
+                        StopLoss = stop,
+                        TakeProfit = take,
+                        EntryPoint = entry,
+                        ParentContainer = ParentContainer,
+                        ChildContainer = ChildContainer
+                    };
+
+                    if (CurrentSignal is null)
+                    {
+                        CurrentSignal = signal;
+                        CurrentSignal.SignalState = SignalState.Ready;
+                        ChildSignalChanged?.Invoke(this, signal);
+                    }
+
+                    BearishICISignal?.Invoke(this, signal);
+                }
+            }
+            else if (CurrentSignalPattern == SignalPattern.Bullish_ICI_CIC)
+            {
+                var childSwings = GetChildSwings(LegStatus.Leg3, openEnd: true);
+                if (childSwings is null) return;
+                var lastICI = childSwings.LastOrDefault();
+
+                if (lastICI is not null
+                    && lastICI.PatternType == PatternType.BullishICI
+                    && PriceActionSwing.GetImpulseType(lastICI) == ImpulseType.Breakout)
+                {
+                    decimal stop = lastICI.Leg3.BeginElement.Candle.LowPrice;
+                    decimal take = TradeCalc.T272(
+                            GetParentSwing()!.Leg3.EndElement.Candle.LowPrice,
+                            GetParentSwing()!.Leg3.BeginElement.Candle.HighPrice);
+                    decimal entry = TradeCalc.GetEntryByRR(stop, take, RiskReward)
+                        > lastICI.Leg3.EndElement.Candle.ClosePrice
+                        ? lastICI.Leg3.EndElement.Candle.ClosePrice
+                        : TradeCalc.GetEntryByRR(stop, take, RiskReward);
+
+                    var signal = new SignalEntity
+                    {
+                        Id = Guid.NewGuid(),
+                        SignalDirection = SignalDirection.Buy,
+                        SignalPattern = CurrentSignalPattern,
+                        StopLoss = stop,
+                        TakeProfit = take,
+                        EntryPoint = entry,
+                        ParentContainer = ParentContainer,
+                        ChildContainer = ChildContainer
+                    };
+
+                    if (CurrentSignal is null)
+                    {
+                        CurrentSignal = signal;
+                        CurrentSignal.SignalState = SignalState.Ready;
+                        ChildSignalChanged?.Invoke(this, signal);
+                    }
+
+                    BullishICISignal?.Invoke(this, signal);
+                }
+            }
+            else if (CurrentSignalPattern == SignalPattern.Bullish_ICI_CIC_ICC)
+            {
+                var childSwings = GetChildSwings(LegStatus.Leg2, openEnd: true);
+                if (childSwings is null) return;
+                var lastICI = childSwings.LastOrDefault();
+
+                if (lastICI is not null &&
+                    lastICI.PatternType == PatternType.BullishICI
+                    && PriceActionSwing.GetImpulseType(lastICI) == ImpulseType.Breakout)
+                {
+                    decimal stop = lastICI.Leg3.BeginElement.Candle.LowPrice;
+                    decimal take = TradeCalc.T272(
+                            GetParentSwing()!.Leg2.EndElement.Candle.LowPrice,
+                            GetParentSwing()!.Leg2.BeginElement.Candle.HighPrice);
+                    decimal entry = TradeCalc.GetEntryByRR(stop, take, RiskReward)
+                        > lastICI.Leg3.EndElement.Candle.ClosePrice
+                        ? lastICI.Leg3.EndElement.Candle.ClosePrice
+                        : TradeCalc.GetEntryByRR(stop, take, RiskReward);
+
+                    var signal = new SignalEntity
+                    {
+                        Id = Guid.NewGuid(),
+                        SignalDirection = SignalDirection.Buy,
+                        SignalPattern = CurrentSignalPattern,
+                        StopLoss = stop,
+                        TakeProfit = take,
+                        EntryPoint = entry,
+                        ParentContainer = ParentContainer,
+                        ChildContainer = ChildContainer
+                    };
+
+                    if (CurrentSignal is null)
+                    {
+                        CurrentSignal = signal;
+                        CurrentSignal.SignalState = SignalState.Ready;
+                        ChildSignalChanged?.Invoke(this, signal);
+                    }
+
+                    BullishICISignal?.Invoke(this, signal);
+                }
+            }
+            ChildChanged?.Invoke(this, childContainer!);
+        }
+        private void ChildContainer_MicroCandleChanged(object? sender, Candle e)
+        {
+            if (CurrentSignal?.SignalDirection == SignalDirection.Buy)
+            {
+                if (CurrentSignal?.SignalState == SignalState.Ready)
+                {
+                    if (e.LowPrice <= CurrentSignal?.EntryPoint)
+                        CurrentSignal.SignalState = SignalState.EntryHitted;
+
+                    else if (e.HighPrice >= CurrentSignal?.TakeProfit)
+                    {
+                        CurrentSignal.SignalState = SignalState.MissedOut;
+                        PositionHistory.Add(new PositionEntity
+                        {
+                            Id = CurrentSignal.Id,
+                            SignalDirection = CurrentSignal.SignalDirection,
+                            EntryPoint = CurrentSignal.EntryPoint,
+                            StopLoss = CurrentSignal.StopLoss,
+                            TakeProfit = CurrentSignal.TakeProfit,
+                            PositionState = PositionState.Missedout,
+                            SignalPattern = CurrentSignal.SignalPattern,
+                        });
+                        CurrentSignal = null;
+                    }
+                }
+                else if (CurrentSignal?.SignalState == SignalState.EntryHitted)
+                {
+                    if (e.LowPrice <= CurrentSignal?.StopLoss)
+                    {
+                        CurrentSignal.SignalState = SignalState.StopHitted;
+                        PositionHistory.Add(new PositionEntity
+                        {
+                            Id = CurrentSignal.Id,
+                            SignalDirection= CurrentSignal.SignalDirection,
+                            EntryPoint = CurrentSignal.EntryPoint,
+                            StopLoss = CurrentSignal.StopLoss,
+                            TakeProfit = CurrentSignal.TakeProfit,
+                            PositionState = PositionState.Stop,
+                            SignalPattern = CurrentSignal.SignalPattern,
+                        });
+                        CurrentSignal = null;
+                    }
+                    else if (e.HighPrice >= CurrentSignal?.TakeProfit)
+                    {
+                        CurrentSignal.SignalState = SignalState.TakeProfitHitted;
+                        PositionHistory.Add(new PositionEntity
+                        {
+                            Id = CurrentSignal.Id,
+                            SignalDirection = CurrentSignal.SignalDirection,
+                            EntryPoint = CurrentSignal.EntryPoint,
+                            StopLoss = CurrentSignal.StopLoss,
+                            TakeProfit = CurrentSignal.TakeProfit,
+                            PositionState = PositionState.Profit,
+                            SignalPattern = CurrentSignal.SignalPattern,
+                        });
+                        CurrentSignal = null;
+                    }
+                }
+            }
+            else if (CurrentSignal?.SignalDirection == SignalDirection.Sell)
+            {
+                if (CurrentSignal.SignalState == SignalState.Ready)
+                {
+                    if (e.HighPrice >= CurrentSignal?.EntryPoint)
+                        CurrentSignal.SignalState = SignalState.EntryHitted;
+
+                    if (e.LowPrice <= CurrentSignal?.TakeProfit)
+                    {
+                        CurrentSignal.SignalState = SignalState.MissedOut;
+                        PositionHistory.Add(new PositionEntity
+                        {
+                            Id = CurrentSignal.Id,
+                            SignalDirection = CurrentSignal.SignalDirection,
+                            EntryPoint = CurrentSignal.EntryPoint,
+                            StopLoss = CurrentSignal.StopLoss,
+                            TakeProfit = CurrentSignal.TakeProfit,
+                            PositionState = PositionState.Missedout,
+                            SignalPattern = CurrentSignal.SignalPattern,
+                        });
+                        CurrentSignal = null;
+                    }
+                }
+                else if (CurrentSignal.SignalState == SignalState.EntryHitted)
+                {
+                    if (e.HighPrice >= CurrentSignal?.StopLoss)
+                    {
+                        CurrentSignal.SignalState = SignalState.StopHitted;
+                        PositionHistory.Add(new PositionEntity
+                        {
+                            Id = CurrentSignal.Id,
+                            SignalDirection = CurrentSignal.SignalDirection,
+                            EntryPoint = CurrentSignal.EntryPoint,
+                            StopLoss = CurrentSignal.StopLoss,
+                            TakeProfit = CurrentSignal.TakeProfit,
+                            PositionState = PositionState.Stop,
+                            SignalPattern = CurrentSignal.SignalPattern,
+                        });
+                        CurrentSignal = null;
+                    }
+                    else if (e.LowPrice <= CurrentSignal?.TakeProfit)
+                    {
+                        CurrentSignal.SignalState = SignalState.TakeProfitHitted;
+                        PositionHistory.Add(new PositionEntity
+                        {
+                            Id = CurrentSignal.Id,
+                            SignalDirection = CurrentSignal.SignalDirection,
+                            EntryPoint = CurrentSignal.EntryPoint,
+                            StopLoss = CurrentSignal.StopLoss,
+                            TakeProfit = CurrentSignal.TakeProfit,
+                            PositionState = PositionState.Profit,
+                            SignalPattern = CurrentSignal.SignalPattern,
+                        });
+                        CurrentSignal = null;
+                    }
+                }
+            }
+        }
+
+        private PriceActionSwing? GetParentSwing(int level = 0)
+        {
+            if (level < 0) throw new ArgumentOutOfRangeException(nameof(level) + " must grater than 0");
+
+            if (ParentContainer != null)
+                return ParentContainer.Swings.SkipLast(level).LastOrDefault().Value;
+            else
+                return null;
+        }
+        private List<PriceActionSwing>? GenerateChildList(bool nonStop, long cStartSeq, long cEndSeq)
+        {
+            if (!nonStop)
+            {
+                var childCandles = ChildContainer!.Candles.Where(c => c.SeqNum >= cStartSeq && c.SeqNum <= cEndSeq).ToList();
+                return PriceActionContainer.GenerateContainer(childCandles).Swings.Values.ToList();
+            }
+            else
+            {
+                var childCandles = ChildContainer!.Candles.Where(c => c.SeqNum >= cStartSeq).ToList();
+                return PriceActionContainer.GenerateContainer(childCandles).Swings.Values.ToList();
+            }
+        }
+        private bool ValidateTwoCloseBreak(PriceActionSwing swing)
+        {
+            if (!CheckTwoCloseBreak) return true;
+
             #region Null Check
             if (swing is null)
                 throw new ArgumentNullException(nameof(swing));
@@ -337,280 +903,6 @@ namespace StrategyMinimaMaxima.PriceAction
                 {
                     return false;
                 }
-            }
-        }
-        private void parentChanged()
-        {
-            if (parentContainer is not null)
-            {
-                if (parentContainer.Swings.Count >= 4)
-                {
-                    //---------------------------------------------------------------
-                    //--- LEVEL 1 : Two swing scenario in Bullish and Bearish ICI ---
-                    //---------------------------------------------------------------
-                    if ((getParentSwing(1)!.PatternType == PatternType.BullishICI
-                        || getParentSwing(1)!.PatternType == PatternType.BullishCII)
-                        && getParentSwing()!.PatternType == PatternType.BullishCIC
-                        && PriceActionSwing.GetImpulseType(getParentSwing(1)!) == ImpulseType.Breakout
-                        && PriceActionSwing.GetCorrectionType(getParentSwing()!) != CorrectionType.Brokeback)
-                    {
-                        if (IsTwoCloseBreak(getParentSwing(1)!))
-                        {
-                            if (CurrentPattern != ParentPatternType.Bullish_ICI_CIC)
-                            {
-                                CurrentPattern = ParentPatternType.Bullish_ICI_CIC;
-
-                                if (getParentSwing(1)!.PatternType == PatternType.BullishICI)
-                                    LastImpulseSlope = parentContainer.GetSlope(
-                                        getParentSwing(1)!.Leg3.BeginElement.Candle!.SeqNum,
-                                        getParentSwing(1)!.Leg3.EndElement.Candle!.SeqNum, MomentumType.Bullish);
-                                else if (getParentSwing(1)!.PatternType == PatternType.BullishCII)
-                                    LastImpulseSlope = parentContainer.GetSlope(
-                                        getParentSwing(1)!.Leg2.BeginElement.Candle!.SeqNum,
-                                        getParentSwing(1)!.Leg2.EndElement.Candle!.SeqNum, MomentumType.Bullish);
-
-
-                                SignalPatternChanged?.Invoke(this, new ParentPatternEventArgs
-                                {
-                                    ParentPatternType = CurrentPattern,
-                                    ParentContainer = parentContainer,
-                                });
-                            }
-                            BullishICI?.Invoke(this, new ParentPatternEventArgs
-                            {
-                                ParentPatternType = CurrentPattern,
-                                ParentContainer = parentContainer,
-                                ImpulseSlope = LastImpulseSlope
-                            });
-                        }
-                    }
-                    else if ((getParentSwing(1)!.PatternType == PatternType.BearishICI
-                        || getParentSwing(1)!.PatternType == PatternType.BearishCII)
-                        && getParentSwing()!.PatternType == PatternType.BearishCIC
-                        && PriceActionSwing.GetImpulseType(getParentSwing(1)!) == ImpulseType.Breakout
-                        && PriceActionSwing.GetCorrectionType(getParentSwing()!) != CorrectionType.Brokeback)
-                    {
-                        if (IsTwoCloseBreak(getParentSwing(1)!))
-                        {
-                            if (CurrentPattern != ParentPatternType.Bearish_ICI_CIC)
-                            {
-                                CurrentPattern = ParentPatternType.Bearish_ICI_CIC;
-
-                                if (getParentSwing(1)!.PatternType == PatternType.BearishICI)
-                                    LastImpulseSlope = parentContainer.GetSlope(
-                                        getParentSwing(1)!.Leg3.BeginElement.Candle!.SeqNum,
-                                        getParentSwing(1)!.Leg3.EndElement.Candle!.SeqNum, MomentumType.Bearish);
-                                else if (getParentSwing(1)!.PatternType == PatternType.BearishCII)
-                                    LastImpulseSlope = parentContainer.GetSlope(
-                                        getParentSwing(1)!.Leg2.BeginElement.Candle!.SeqNum,
-                                        getParentSwing(1)!.Leg2.EndElement.Candle!.SeqNum, MomentumType.Bearish);
-
-                                SignalPatternChanged?.Invoke(this, new ParentPatternEventArgs
-                                {
-                                    ParentPatternType = CurrentPattern,
-                                    ParentContainer = parentContainer,
-                                });
-                            }
-                            BearishICI?.Invoke(this, new ParentPatternEventArgs
-                            {
-                                ParentPatternType = CurrentPattern,
-                                ParentContainer = parentContainer,
-                                ImpulseSlope = LastImpulseSlope
-                            });
-                        }
-                    }
-                    //-----------------------------------------------------------------
-                    //--- LEVEL 2 : Three swing scenario in Bullish and Bearish ICI ---
-                    //-----------------------------------------------------------------
-                    else if ((getParentSwing(2)!.PatternType == PatternType.BullishICI
-                        || getParentSwing(2)!.PatternType == PatternType.BullishCII)
-                        && getParentSwing(1)!.PatternType == PatternType.BullishCIC
-                        && getParentSwing()!.PatternType == PatternType.BullishICC
-                        && PriceActionSwing.GetImpulseType(getParentSwing(2)!) == ImpulseType.Breakout
-                        && PriceActionSwing.GetCorrectionType(getParentSwing()!,
-                            getParentSwing(2)!.Leg1.EndElement) != CorrectionType.Brokeback)
-                    {
-                        if (IsTwoCloseBreak(getParentSwing(2)!))
-                        {
-                            if (CurrentPattern != ParentPatternType.Bullish_ICI_CIC_ICC)
-                            {
-                                CurrentPattern = ParentPatternType.Bullish_ICI_CIC_ICC;
-
-                                if (getParentSwing(2)!.PatternType == PatternType.BullishICI)
-                                    LastImpulseSlope = parentContainer.GetSlope(
-                                        getParentSwing(2)!.Leg3.BeginElement.Candle!.SeqNum,
-                                        getParentSwing(2)!.Leg3.EndElement.Candle!.SeqNum, MomentumType.Bullish);
-                                else if (getParentSwing(2)!.PatternType == PatternType.BullishCII)
-                                    LastImpulseSlope = parentContainer.GetSlope(
-                                        getParentSwing(2)!.Leg2.BeginElement.Candle!.SeqNum,
-                                        getParentSwing(2)!.Leg2.EndElement.Candle!.SeqNum, MomentumType.Bullish);
-
-                                SignalPatternChanged?.Invoke(this, new ParentPatternEventArgs
-                                {
-                                    ParentPatternType = CurrentPattern,
-                                    ParentContainer = parentContainer,
-                                });
-                            }
-                            BullishICI?.Invoke(this, new ParentPatternEventArgs
-                            {
-                                ParentPatternType = CurrentPattern,
-                                ParentContainer = parentContainer,
-                                ImpulseSlope = LastImpulseSlope
-                            });
-                        }
-                    }
-                    else if ((getParentSwing(2)!.PatternType == PatternType.BearishICI
-                        || getParentSwing(2)!.PatternType == PatternType.BearishCII)
-                        && getParentSwing(1)!.PatternType == PatternType.BearishCIC
-                        && getParentSwing()!.PatternType == PatternType.BearishICC
-                        && PriceActionSwing.GetImpulseType(getParentSwing(2)!) == ImpulseType.Breakout
-                        && PriceActionSwing.GetCorrectionType(getParentSwing()!,
-                            getParentSwing(2)!.Leg1.EndElement) != CorrectionType.Brokeback)
-                    {
-                        if (IsTwoCloseBreak(getParentSwing(2)!))
-                        {
-                            if (CurrentPattern != ParentPatternType.Bearish_ICI_CIC_ICC)
-                            {
-                                CurrentPattern = ParentPatternType.Bearish_ICI_CIC_ICC;
-
-                                if (getParentSwing(2)!.PatternType == PatternType.BearishICI)
-                                    LastImpulseSlope = parentContainer.GetSlope(
-                                        getParentSwing(2)!.Leg3.BeginElement.Candle!.SeqNum,
-                                        getParentSwing(2)!.Leg3.EndElement.Candle!.SeqNum, MomentumType.Bearish);
-                                else if (getParentSwing(2)!.PatternType == PatternType.BearishCII)
-                                    LastImpulseSlope = parentContainer.GetSlope(
-                                        getParentSwing(2)!.Leg2.BeginElement.Candle!.SeqNum,
-                                        getParentSwing(2)!.Leg2.EndElement.Candle!.SeqNum, MomentumType.Bearish);
-
-                                SignalPatternChanged?.Invoke(this, new ParentPatternEventArgs
-                                {
-                                    ParentPatternType = CurrentPattern,
-                                    ParentContainer = parentContainer,
-                                });
-                            }
-                            BearishICI?.Invoke(this, new ParentPatternEventArgs
-                            {
-                                ParentPatternType = CurrentPattern,
-                                ParentContainer = parentContainer,
-                                ImpulseSlope = LastImpulseSlope
-                            });
-                        }
-                    }
-                    //-----------------------------------------------------------------
-                    //--- LEVEL 3 : Four swing scenario in Bullish and Bearish ICI ----
-                    //-----------------------------------------------------------------
-                    else if ((getParentSwing(3)!.PatternType == PatternType.BullishICI
-                        || getParentSwing(3)!.PatternType == PatternType.BullishCII)
-                        && getParentSwing(2)!.PatternType == PatternType.BullishCIC
-                        && getParentSwing(1)!.PatternType == PatternType.BullishICC
-                        & getParentSwing()!.PatternType == PatternType.BearishICC
-                        && PriceActionSwing.GetImpulseType(getParentSwing(3)!) == ImpulseType.Breakout
-                        && PriceActionSwing.GetCorrectionType(getParentSwing(2)!) != CorrectionType.Brokeback)
-                    {
-                        if (IsTwoCloseBreak(getParentSwing(3)!))
-                        {
-                            if (CurrentPattern != ParentPatternType.Bullish_ICI_CIC_T_ICC)
-                            {
-                                CurrentPattern = ParentPatternType.Bullish_ICI_CIC_T_ICC;
-
-                                if (getParentSwing(3)!.PatternType == PatternType.BullishICI)
-                                    LastImpulseSlope = parentContainer.GetSlope(
-                                        getParentSwing(3)!.Leg3.BeginElement.Candle!.SeqNum,
-                                        getParentSwing(3)!.Leg3.EndElement.Candle!.SeqNum, MomentumType.Bullish);
-                                else if (getParentSwing(3)!.PatternType == PatternType.BullishCII)
-                                    LastImpulseSlope = parentContainer.GetSlope(
-                                        getParentSwing(3)!.Leg2.BeginElement.Candle!.SeqNum,
-                                        getParentSwing(3)!.Leg2.EndElement.Candle!.SeqNum, MomentumType.Bullish);
-
-                                SignalPatternChanged?.Invoke(this, new ParentPatternEventArgs
-                                {
-                                    ParentPatternType = CurrentPattern,
-                                    ParentContainer = parentContainer,
-                                });
-                            }
-                            BullishICI?.Invoke(this, new ParentPatternEventArgs
-                            {
-                                ParentPatternType = CurrentPattern,
-                                ParentContainer = parentContainer,
-                                ImpulseSlope = LastImpulseSlope
-                            });
-                        }
-                    }
-                    else if ((getParentSwing(3)!.PatternType == PatternType.BearishICI
-                        || getParentSwing(3)!.PatternType == PatternType.BearishCII)
-                        && getParentSwing(2)!.PatternType == PatternType.BearishCIC
-                        && getParentSwing(1)!.PatternType == PatternType.BearishICC
-                        && getParentSwing()!.PatternType==PatternType.BullishICC
-                        && PriceActionSwing.GetImpulseType(getParentSwing(3)!) == ImpulseType.Breakout
-                        && PriceActionSwing.GetCorrectionType(getParentSwing(2)!) != CorrectionType.Brokeback)
-                    {
-                        if (IsTwoCloseBreak(getParentSwing(3)!))
-                        {
-                            if (CurrentPattern != ParentPatternType.Bearish_ICI_CIC_T_ICC)
-                            {
-                                CurrentPattern = ParentPatternType.Bearish_ICI_CIC_T_ICC;
-
-                                if (getParentSwing(3)!.PatternType == PatternType.BearishICI)
-                                    LastImpulseSlope = parentContainer.GetSlope(
-                                        getParentSwing(3)!.Leg3.BeginElement.Candle!.SeqNum,
-                                        getParentSwing(3)!.Leg3.EndElement.Candle!.SeqNum, MomentumType.Bearish);
-                                else if (getParentSwing(3)!.PatternType == PatternType.BearishCII)
-                                    LastImpulseSlope = parentContainer.GetSlope(
-                                        getParentSwing(3)!.Leg2.BeginElement.Candle!.SeqNum,
-                                        getParentSwing(3)!.Leg2.EndElement.Candle!.SeqNum, MomentumType.Bearish);
-
-                                SignalPatternChanged?.Invoke(this, new ParentPatternEventArgs
-                                {
-                                    ParentPatternType = CurrentPattern,
-                                    ParentContainer = parentContainer,
-                                });
-                            }
-                            BearishICI?.Invoke(this, new ParentPatternEventArgs
-                            {
-                                ParentPatternType = CurrentPattern,
-                                ParentContainer = parentContainer,
-                                ImpulseSlope = LastImpulseSlope
-                            });
-                        }
-                    }
-                    else
-                    {
-                        CurrentPattern = ParentPatternType.None;
-                        SignalPatternChanged?.Invoke(this, new ParentPatternEventArgs
-                        {
-                            ParentPatternType = CurrentPattern,
-                            ParentContainer = parentContainer,
-                            ImpulseSlope = 0
-                        });
-                    }
-                }
-                ParentChanged?.Invoke(this, parentContainer);
-            }
-        }
-        private void childChanged()
-        {
-            ChildChanged?.Invoke(this, childContainer);
-        }
-        private PriceActionSwing? getParentSwing(int level = 0)
-        {
-            if (level < 0) throw new ArgumentOutOfRangeException(nameof(level) + " must grater than 0");
-
-            if (ParentContainer != null)
-                return ParentContainer.Swings.SkipLast(level).LastOrDefault().Value;
-            else
-                return null;
-        }
-        private List<PriceActionSwing>? generateChildList(bool nonStop, long cStartSeq, long cEndSeq)
-        {
-            if (!nonStop)
-            {
-                var childCandles = ChildContainer.Candles.Where(c => c.SeqNum >= cStartSeq && c.SeqNum <= cEndSeq).ToList();
-                return PriceActionContainer.GenerateContainer(childCandles).Swings.Values.ToList();
-            }
-            else
-            {
-                var childCandles = ChildContainer.Candles.Where(c => c.SeqNum >= cStartSeq).ToList();
-                return PriceActionContainer.GenerateContainer(childCandles).Swings.Values.ToList();
             }
         }
 

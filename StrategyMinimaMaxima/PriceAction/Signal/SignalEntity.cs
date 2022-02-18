@@ -9,14 +9,14 @@ namespace StrategyMinimaMaxima.PriceAction.Signal
 {
     public class SignalEntity
     {
-        public SignalEntity(Security security) => Security = security ?? throw new ArgumentNullException(nameof(security));
         public Guid Id { get; set; }
         public decimal StopLoss { get; set; }
         public decimal TakeProfit { get; set; }
-        public decimal EntryPrice { get; set; }
-        public ParentPatternType SignalPattern { get; set; }
+        public decimal EntryPoint { get; set; }
+        public SignalPattern SignalPattern { get; set; }
+        public SignalState SignalState { get; set; } = SignalState.None;
         public SignalDirection SignalDirection { get; set; }
-        public SignalState SignalState { get; set; }
-        public Security Security { get; }
+        public PriceActionContainer? ParentContainer { get; set; }
+        public PriceActionContainer? ChildContainer { get; set; }
     }
 }

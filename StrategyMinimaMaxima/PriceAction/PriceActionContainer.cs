@@ -12,6 +12,7 @@ namespace StrategyMinimaMaxima.PriceAction
         long _candleSeq = 0;
         public PriceActionContainer()
         {
+            MicroCandles = new List<Candle>();
             Candles = new List<Candle>();
             ValleyCandles = new List<Candle>();
             PeakCandles = new List<Candle>();
@@ -20,7 +21,6 @@ namespace StrategyMinimaMaxima.PriceAction
             Legs = new Dictionary<long, PriceActionLeg>();
             Swings = new Dictionary<long, PriceActionSwing>();
         }
-
         public void AddCandle(Candle candle, bool autoSeqNum = true)
         {
             if (candle is null)
@@ -33,6 +33,8 @@ namespace StrategyMinimaMaxima.PriceAction
                 if (autoSeqNum)
                     candle.SeqNum = _candleSeq++;
                 Candles.Add(candle);
+                if (CapacityControl && Candles.Count >= CandleCapacity)
+                    Candles.RemoveAt(Candles.Count - CandleCapacity);
                 processPeaksAndValleys();
                 processChainedElements();
                 processLegs();
@@ -45,6 +47,8 @@ namespace StrategyMinimaMaxima.PriceAction
                     if (autoSeqNum)
                         candle.SeqNum = _candleSeq++;
                     Candles.Add(candle);
+                    if (CapacityControl && Candles.Count >= CandleCapacity)
+                        Candles.RemoveAt(Candles.Count - CandleCapacity);
                     processPeaksAndValleys();
                     processChainedElements();
                     processLegs();
@@ -52,6 +56,13 @@ namespace StrategyMinimaMaxima.PriceAction
                 }
             }
         }
+        public void AddMicroCandle(Candle candle)
+        {
+            MicroCandles.Add(candle);
+            MicroCandleChanged?.Invoke(this, candle);
+        }
+
+        public event EventHandler<Candle>? MicroCandleChanged;
 
         #region Private Methods
 
@@ -311,6 +322,8 @@ namespace StrategyMinimaMaxima.PriceAction
 
         #region Public Properties
 
+        public bool CapacityControl { get; set; } = false;
+        public int CandleCapacity { get; set; } = 48;
         public long ProcessLimit { get; set; } = 0;
         public Dictionary<long, PriceActionElement> Elements { get; private set; }
 
@@ -320,6 +333,7 @@ namespace StrategyMinimaMaxima.PriceAction
 
         public Dictionary<long, PriceActionSwing> Swings { get; private set; }
 
+        public List<Candle> MicroCandles { get; private set; }
         public List<Candle> Candles { get; private set; }
         public List<Candle> ValleyCandles { get; private set; }
         public List<Candle> PeakCandles { get; private set; }

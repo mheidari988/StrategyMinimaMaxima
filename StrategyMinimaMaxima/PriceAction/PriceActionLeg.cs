@@ -21,7 +21,6 @@ namespace StrategyMinimaMaxima.PriceAction
         }
         public PriceActionElement BeginElement { get; set; }
         public PriceActionElement EndElement { get; set; }
-
         public MomentumType MomentumType { get; private set; } = MomentumType.None;
     }
 }
