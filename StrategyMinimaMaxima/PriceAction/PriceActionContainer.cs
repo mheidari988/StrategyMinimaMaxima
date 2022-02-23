@@ -4,14 +4,40 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using StockSharp.Algo.Candles;
+using StockSharp.Logging;
 
 namespace TradeCore.PriceAction
 {
     public class PriceActionContainer
     {
-        long _candleSeq = 0;
-        public PriceActionContainer()
+        #region Private Fields
+
+        private long _candleSeq = 0;
+        private long _microSeq = 0;
+        #endregion
+
+        #region Public Properties
+
+        public int TimeFrameMinutes { get; init; }
+        public bool IsCapacityEnabled { get; set; } = false;
+        public int CandleCapacity { get; set; } = 48;
+        public int MicroCapacity { get => CandleCapacity * TimeFrameMinutes; }
+        public long ProcessLimit { get; set; } = 0;
+        public Dictionary<long, PriceActionElement> Elements { get; private set; }
+        public Dictionary<long, PriceActionElement> ChainedElements { get; private set; }
+        public Dictionary<long, PriceActionLeg> Legs { get; private set; }
+        public Dictionary<long, PriceActionSwing> Swings { get; private set; }
+        public List<Candle> MicroCandles { get; private set; }
+        public List<Candle> Candles { get; private set; }
+        public List<Candle> ValleyCandles { get; private set; }
+        public List<Candle> PeakCandles { get; private set; }
+
+        #endregion
+
+        #region Constructors
+        public PriceActionContainer(int timeFrameMinutes)
         {
+            TimeFrameMinutes= timeFrameMinutes;
             MicroCandles = new List<Candle>();
             Candles = new List<Candle>();
             ValleyCandles = new List<Candle>();
@@ -21,24 +47,31 @@ namespace TradeCore.PriceAction
             Legs = new Dictionary<long, PriceActionLeg>();
             Swings = new Dictionary<long, PriceActionSwing>();
         }
+
+        #endregion
+
+        #region Events
+        public event EventHandler<Candle>? MicroCandleChanged;
+        #endregion
+
+        #region Public Methods
+
         public void AddCandle(Candle candle, bool autoSeqNum = true)
         {
             if (candle is null)
-            {
                 throw new ArgumentNullException(nameof(candle));
-            }
 
             if (ProcessLimit == 0)
             {
                 if (autoSeqNum)
                     candle.SeqNum = _candleSeq++;
                 Candles.Add(candle);
-                if (CapacityControl && Candles.Count >= CandleCapacity)
+                if (IsCapacityEnabled && Candles.Count >= CandleCapacity)
                     Candles.RemoveAt(Candles.Count - CandleCapacity);
-                processPeaksAndValleys();
-                processChainedElements();
-                processLegs();
-                processSwings();
+                ProcessPeaksAndValleys();
+                ProcessChainedElements();
+                ProcessLegs();
+                ProcessSwings();
             }
             else
             {
@@ -47,26 +80,92 @@ namespace TradeCore.PriceAction
                     if (autoSeqNum)
                         candle.SeqNum = _candleSeq++;
                     Candles.Add(candle);
-                    if (CapacityControl && Candles.Count >= CandleCapacity)
+                    if (IsCapacityEnabled && Candles.Count >= CandleCapacity)
                         Candles.RemoveAt(Candles.Count - CandleCapacity);
-                    processPeaksAndValleys();
-                    processChainedElements();
-                    processLegs();
-                    processSwings();
+                    ProcessPeaksAndValleys();
+                    ProcessChainedElements();
+                    ProcessLegs();
+                    ProcessSwings();
                 }
             }
         }
-        public void AddMicroCandle(Candle candle)
+        public void AddMicroCandle(Candle candle, bool autoSeqNum = true)
         {
+            if (autoSeqNum)
+                candle.SeqNum = _microSeq++;
             MicroCandles.Add(candle);
+            if (IsCapacityEnabled && MicroCandles.Count >= MicroCapacity)
+                MicroCandles.RemoveAt(MicroCandles.Count - MicroCapacity);
+
             MicroCandleChanged?.Invoke(this, candle);
         }
+        public static PriceActionContainer GenerateContainer(List<Candle> candles, List<Candle> microCandle)
+        {
+            if (candles is null)
+                throw new ArgumentNullException(nameof(candles));
+            if (microCandle is null)
+                throw new ArgumentNullException(nameof(microCandle));
 
-        public event EventHandler<Candle>? MicroCandleChanged;
+            var container = new PriceActionContainer(15);
+            var selectedMicro =
+                microCandle.Where(c => c.SeqNum >= candles.FirstOrDefault()!.SeqNum * container.TimeFrameMinutes).ToList();
+
+            foreach (var item in selectedMicro)
+                container.AddMicroCandle(item, false); // populate micro first.
+            foreach (var item in candles)
+                container.AddCandle(item, false); // false means: use old SeqNum
+
+            return container;
+        }
+        public decimal GetSlope(long startSeqNum, long endSeqNum, MomentumType momentum)
+        {
+            if (Candles is null) throw new NullReferenceException(nameof(Candles));
+
+            var startPoint = Candles.SingleOrDefault(x => x.SeqNum == startSeqNum);
+            var endPoint = Candles.SingleOrDefault(x => x.SeqNum == endSeqNum);
+            if (startPoint == null || endPoint == null) throw new ArgumentNullException(nameof(startPoint));
+
+            var distance = (endSeqNum - startSeqNum) + 1;
+
+            switch (momentum)
+            {
+                case MomentumType.Bullish:
+                    return (BaseOneTruncate(endPoint.HighPrice) - BaseOneTruncate(startPoint.LowPrice)) / distance;
+                case MomentumType.Bearish:
+                    return (BaseOneTruncate(endPoint.LowPrice) - BaseOneTruncate(startPoint.HighPrice)) / distance;
+                case MomentumType.None:
+                    throw new ArgumentOutOfRangeException(nameof(momentum));
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(momentum));
+            }
+        }
+        public decimal GetAbsoluteSlope(long startSeqNum, long endSeqNum, MomentumType momentum)
+            => Math.Abs(GetSlope(startSeqNum, endSeqNum, momentum));
+
+        #endregion
 
         #region Private Methods
+        private bool IsMinimaFirst(Candle target)
+        {
+            if (target is null) throw new ArgumentNullException(nameof(target));
 
-        private void processPeaksAndValleys()
+            if (target.SeqNum == 0) 
+                return true;
+            else
+            {
+                var query = MicroCandles.Where(x =>
+                x.SeqNum >= target.SeqNum * TimeFrameMinutes - TimeFrameMinutes &&
+                x.SeqNum <= target.SeqNum * TimeFrameMinutes);
+
+                var high = query.Where(x => x.HighPrice == query.Max(x => x.HighPrice)).FirstOrDefault();
+                var low = query.Where(x => x.LowPrice == query.Min(x => x.LowPrice)).FirstOrDefault();
+                if (high != null && low != null)
+                    return low.SeqNum <= high.SeqNum;
+                else
+                    return false;
+            }
+        }
+        private void ProcessPeaksAndValleys()
         {
             ValleyCandles.Clear();
             PeakCandles.Clear();
@@ -196,7 +295,7 @@ namespace TradeCore.PriceAction
                 }
             }
         }
-        private void processChainedElements()
+        private void ProcessChainedElements()
         {
             if (Elements == null)
                 throw new NullReferenceException("SwingElements cannot be null.");
@@ -242,7 +341,7 @@ namespace TradeCore.PriceAction
                 }
             }
         }
-        private void processLegs()
+        private void ProcessLegs()
         {
             if (ChainedElements == null)
                 throw new NullReferenceException("ChainedSwingElements cannot be null.");
@@ -258,7 +357,7 @@ namespace TradeCore.PriceAction
                 }
             }
         }
-        private void processSwings()
+        private void ProcessSwings()
         {
             Swings.Clear();
 
@@ -278,66 +377,6 @@ namespace TradeCore.PriceAction
                 while ((price * 10) < 10) price *= 10;
             return price;
         }
-
-        #endregion
-
-        public static PriceActionContainer GenerateContainer(List<Candle> candles, bool resetSeqNum = false)
-        {
-            if (candles is null)
-            {
-                throw new ArgumentNullException(nameof(candles));
-            }
-
-            var container = new PriceActionContainer();
-            foreach (var item in candles)
-            {
-                container.AddCandle(item, false); // false means: use old SeqNum
-            }
-            return container;
-        }
-
-        public decimal GetSlope(long startSeqNum, long endSeqNum, MomentumType momentum)
-        {
-            if (Candles is null) throw new NullReferenceException(nameof(Candles));
-
-            var startPoint = Candles.SingleOrDefault(x => x.SeqNum == startSeqNum);
-            var endPoint = Candles.SingleOrDefault(x => x.SeqNum == endSeqNum);
-            if (startPoint == null || endPoint == null) throw new ArgumentNullException(nameof(startPoint));
-
-            var distance = (endSeqNum - startSeqNum) + 1;
-
-            switch (momentum)
-            {
-                case MomentumType.Bullish:
-                    return (BaseOneTruncate(endPoint.HighPrice) - BaseOneTruncate(startPoint.LowPrice)) / distance;
-                case MomentumType.Bearish:
-                    return (BaseOneTruncate(endPoint.LowPrice) - BaseOneTruncate(startPoint.HighPrice)) / distance;
-                case MomentumType.None:
-                    throw new ArgumentOutOfRangeException(nameof(momentum));
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(momentum));
-            }
-        }
-        public decimal GetAbsoluteSlope(long startSeqNum, long endSeqNum, MomentumType momentum) => Math.Abs(GetSlope(startSeqNum, endSeqNum, momentum));
-
-        #region Public Properties
-
-        public bool CapacityControl { get; set; } = false;
-        public int CandleCapacity { get; set; } = 48;
-        public long ProcessLimit { get; set; } = 0;
-        public Dictionary<long, PriceActionElement> Elements { get; private set; }
-
-        public Dictionary<long, PriceActionElement> ChainedElements { get; private set; }
-
-        public Dictionary<long, PriceActionLeg> Legs { get; private set; }
-
-        public Dictionary<long, PriceActionSwing> Swings { get; private set; }
-
-        public List<Candle> MicroCandles { get; private set; }
-        public List<Candle> Candles { get; private set; }
-        public List<Candle> ValleyCandles { get; private set; }
-        public List<Candle> PeakCandles { get; private set; }
-
         #endregion
     }
 }

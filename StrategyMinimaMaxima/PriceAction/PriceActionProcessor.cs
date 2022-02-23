@@ -805,12 +805,12 @@ namespace TradeCore.PriceAction
             if (!nonStop)
             {
                 var childCandles = ChildContainer!.Candles.Where(c => c.SeqNum >= cStartSeq && c.SeqNum <= cEndSeq).ToList();
-                return PriceActionContainer.GenerateContainer(childCandles).Swings.Values.ToList();
+                return PriceActionContainer.GenerateContainer(childCandles, childContainer!.MicroCandles).Swings.Values.ToList();
             }
             else
             {
                 var childCandles = ChildContainer!.Candles.Where(c => c.SeqNum >= cStartSeq).ToList();
-                return PriceActionContainer.GenerateContainer(childCandles).Swings.Values.ToList();
+                return PriceActionContainer.GenerateContainer(childCandles, childContainer!.MicroCandles).Swings.Values.ToList();
             }
         }
         private bool ValidateTwoCloseBreak(PriceActionSwing swing)

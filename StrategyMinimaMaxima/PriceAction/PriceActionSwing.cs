@@ -227,7 +227,6 @@ namespace TradeCore.PriceAction
 
         public static CorrectionType GetCorrectionType(PriceActionSwing swing, PriceActionElement? preSwingElement = null)
         {
-
             if (swing.Leg1 == null || swing.Leg2 == null || swing.Leg3 == null)
                 throw new ArgumentException("Swing legs cannot be null");
 

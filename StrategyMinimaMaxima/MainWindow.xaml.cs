@@ -37,7 +37,7 @@ namespace TradeCore
 
         private Security _security;
         private Portfolio _portfolio;
-        private readonly LogManager _logManager;
+        public static LogManager MainLogManager;
         private ICIStrategy iciStrategy;
         private readonly string _pathHistory = @"C:\Storage";
 
@@ -49,9 +49,9 @@ namespace TradeCore
         {
             InitializeComponent();
 
-            _logManager = new LogManager();
-            _logManager.Listeners.Add(new FileLogListener("log.txt"));
-            _logManager.Listeners.Add(new GuiLogListener(Monitor));
+            MainLogManager = new LogManager();
+            MainLogManager.Listeners.Add(new FileLogListener("log.txt"));
+            MainLogManager.Listeners.Add(new GuiLogListener(Monitor));
             DatePickerBegin.SelectedDate = new DateTime(2021, 1, 1);
             DatePickerEnd.SelectedDate = new DateTime(2021, 1, 2);
 
@@ -95,7 +95,7 @@ namespace TradeCore
             };
 
             //.................add connector to the log manager...................
-            _logManager.Sources.Add(_connector);
+            MainLogManager.Sources.Add(_connector);
 
             microCandleSeries = new CandleSeries(typeof(TimeFrameCandle), _security, TimeSpan.FromMinutes(1))
             {
@@ -134,7 +134,7 @@ namespace TradeCore
             };
 
             //.................adding strategy to log manager...................
-            _logManager.Sources.Add(iciStrategy);
+            MainLogManager.Sources.Add(iciStrategy);
 
             //.................setting strategy events...................
             iciStrategy.NewMyTrade += MyTradeGrid.Trades.Add;
@@ -194,16 +194,24 @@ namespace TradeCore
             iciStrategy.Processor.BearishICI += Processor_BearishICI;
             iciStrategy.Processor.ChildSignalChanged += Processor_ChildSignalChanged;
             iciStrategy.Processor.ParentChanged += Processor_ParentChanged;
+            iciStrategy.Processor.ChildChanged += Processor_ChildChanged;
             iciStrategy.Start();
             _connector.Start();
         }
 
-        private void Processor_ParentChanged(object? sender, PriceActionContainer e)
+        private void Processor_ChildChanged(object? sender, PriceActionContainer e)
         {
             Dispatcher.Invoke(new Action(() =>
             {
-                Title = e?.Swings.Count.ToString();
+                string str = "";
+                str += "Swings Count" + e?.Swings.Count.ToString() + "\n";
+                Title = str;
             }));
+        }
+
+        private void Processor_ParentChanged(object? sender, PriceActionContainer e)
+        {
+
         }
 
         private void Connector_CandleSeriesProcessing(CandleSeries candleSeries, Candle candle)

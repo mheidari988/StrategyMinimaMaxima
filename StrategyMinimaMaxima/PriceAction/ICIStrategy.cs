@@ -9,16 +9,18 @@ using StockSharp.Algo.Candles;
 using StockSharp.Algo.Strategies;
 using StockSharp.Algo.Strategies.Protective;
 using StockSharp.BusinessEntities;
+using StockSharp.Logging;
 using StockSharp.Messages;
 
 namespace TradeCore.PriceAction
 {
     public class ICIStrategy : Strategy
     {
-        private readonly PriceActionContainer ParentContainer = new PriceActionContainer();
-        private readonly PriceActionContainer ChildContainer = new PriceActionContainer();
+        private readonly PriceActionContainer ParentContainer = new PriceActionContainer(60);
+        private readonly PriceActionContainer ChildContainer = new PriceActionContainer(15);
         private PriceActionProcessor processor;
 
+        public int Hierarchy { get; set; } = 4;
         public CandleSeries ParentCandleSeries { get; }
         public CandleSeries ChildCandleSeries { get; }
         public CandleSeries MicroCandleSeries { get; }
@@ -32,9 +34,13 @@ namespace TradeCore.PriceAction
             ParentCandleSeries = parentCandleSeries;
             ChildCandleSeries = childCandleSeries;
             MicroCandleSeries = microCandleSeries;
-            ParentContainer.CapacityControl = true;
+
+            ParentContainer.IsCapacityEnabled = true;
+            ChildContainer.IsCapacityEnabled = true;
+            ChildContainer.CandleCapacity = ParentContainer.CandleCapacity * Hierarchy;
+
             ParentContainer.ProcessLimit = processLimit;
-            ChildContainer.ProcessLimit = processLimit * 4;
+            ChildContainer.ProcessLimit = processLimit * Hierarchy;
             processor = new PriceActionProcessor(ParentContainer, ChildContainer);
         }
 
@@ -52,41 +58,16 @@ namespace TradeCore.PriceAction
         }
         protected override void OnStarted()
         {
+            Connector.SubscribeCandles(MicroCandleSeries);
             Connector.SubscribeCandles(ChildCandleSeries);
             Connector.SubscribeCandles(ParentCandleSeries);
-            Connector.SubscribeCandles(MicroCandleSeries);
 
             Connector.CandleSeriesProcessing += Connector_CandleSeriesProcessing;
 
             base.OnStarted();
         }
-
         private void Connector_CandleSeriesProcessing(CandleSeries candleSeries, Candle candle)
         {
-            //-------------------------------------------------------------------------
-            //--- Pass candles to ParentManager to process and add it to processor ---
-            //-------------------------------------------------------------------------
-            if (((TimeFrameCandle)candle).TimeFrame == TimeSpan.FromMinutes(60))
-            {
-                if (candle.State == CandleStates.Finished)
-                {
-                    ParentContainer.AddCandle(candle);
-                    Processor.ParentContainer = ParentContainer;
-                }
-            }
-
-            //-------------------------------------------------------------------------
-            //--- Pass candles to ParentManager to process and add it to processor ---
-            //-------------------------------------------------------------------------
-            if (((TimeFrameCandle)candle).TimeFrame == TimeSpan.FromMinutes(15))
-            {
-                if (candle.State == CandleStates.Finished)
-                {
-                    ChildContainer.AddCandle(candle);
-                    Processor.ChildContainer = ChildContainer;
-                }
-            }
-
             //----------------------------------------------------------------------------
             //--- Pass micro candles to processor to evaluate positions on lower times ---
             //----------------------------------------------------------------------------
@@ -95,6 +76,31 @@ namespace TradeCore.PriceAction
                 if (candle.State == CandleStates.Finished)
                 {
                     ChildContainer.AddMicroCandle(candle);
+                    this.AddInfoLog($"MicroCandle: {candle.OpenTime} Added");
+                }
+            }
+            //-------------------------------------------------------------------------
+            //--- Pass candles to ParentManager to process and add it to processor ---
+            //-------------------------------------------------------------------------
+            if (((TimeFrameCandle)candle).TimeFrame == TimeSpan.FromMinutes(15))
+            {
+                if (candle.State == CandleStates.Finished)
+                {
+                    ChildContainer.AddCandle(candle);
+                    this.AddInfoLog($"ChildCandle: {candle.Arg} Added");
+                    Processor.ChildContainer = ChildContainer;
+                }
+            }
+            //-------------------------------------------------------------------------
+            //--- Pass candles to ParentManager to process and add it to processor ---
+            //-------------------------------------------------------------------------
+            if (((TimeFrameCandle)candle).TimeFrame == TimeSpan.FromMinutes(60))
+            {
+                if (candle.State == CandleStates.Finished)
+                {
+                    ParentContainer.AddCandle(candle);
+                    this.AddInfoLog($"ParentCandle: {candle.Arg} Added");
+                    Processor.ParentContainer = ParentContainer;
                 }
             }
         }
