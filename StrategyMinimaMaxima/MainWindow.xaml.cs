@@ -193,25 +193,8 @@ namespace TradeCore
             iciStrategy.Processor.BullishICI += Processor_BullishICI;
             iciStrategy.Processor.BearishICI += Processor_BearishICI;
             iciStrategy.Processor.ChildSignalChanged += Processor_ChildSignalChanged;
-            iciStrategy.Processor.ParentChanged += Processor_ParentChanged;
-            iciStrategy.Processor.ChildChanged += Processor_ChildChanged;
             iciStrategy.Start();
             _connector.Start();
-        }
-
-        private void Processor_ChildChanged(object? sender, PriceActionContainer e)
-        {
-            Dispatcher.Invoke(new Action(() =>
-            {
-                string str = "";
-                str += "Swings Count" + e?.Swings.Count.ToString() + "\n";
-                Title = str;
-            }));
-        }
-
-        private void Processor_ParentChanged(object? sender, PriceActionContainer e)
-        {
-
         }
 
         private void Connector_CandleSeriesProcessing(CandleSeries candleSeries, Candle candle)

@@ -1,21 +1,24 @@
-﻿using System;
+﻿using StockSharp.Algo.Candles;
+using System;
+using System.Collections.Generic;
 
 namespace TradeCore.PriceAction
 {
     public class PriceActionSwing
     {
-        public PriceActionSwing(PriceActionLeg leg1, PriceActionLeg leg2, PriceActionLeg leg3)
+        public PriceActionSwing(PriceActionLeg leg1, PriceActionLeg leg2, PriceActionLeg leg3, List<Candle> candles)
         {
             Leg1 = leg1 ?? throw new ArgumentNullException(nameof(leg1));
             Leg2 = leg2 ?? throw new ArgumentNullException(nameof(leg2));
             Leg3 = leg3 ?? throw new ArgumentNullException(nameof(leg3));
+            Candles = candles ?? throw new ArgumentNullException(nameof(candles));
 
-            findLowersAndHighers();
-            if (!findSwingType())
+            FindLowersAndHighers();
+            if (!FindSwingType())
                 PatternType = PatternType.Unknown;
         }
 
-        private void findLowersAndHighers()
+        private void FindLowersAndHighers()
         {
             if (Leg1.MomentumType == MomentumType.Bullish
                 && Leg2.MomentumType == MomentumType.Bearish
@@ -57,7 +60,7 @@ namespace TradeCore.PriceAction
                 throw new ArgumentOutOfRangeException("Legs' MomentumMode is not acceptable.");
         }
 
-        private bool findSwingType()
+        private bool FindSwingType()
         {
             bool tempResult = true;
 
@@ -356,6 +359,7 @@ namespace TradeCore.PriceAction
         public PriceActionElement? HigherLow { get; private set; }
         public PriceActionElement? LowerHigh { get; private set; }
         public PriceActionElement? HigherHigh { get; private set; }
+        public List<Candle> Candles { get; set; }
         public PatternType PatternType { get; set; }
     }
 }

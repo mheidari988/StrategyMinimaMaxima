@@ -12,19 +12,20 @@ namespace TradeCore.PriceAction
     {
         #region Private Fields
 
-        private long _candleSeq = 0;
-        private long _microSeq = 0;
+        private long CandleSeqNum = 0;
+        private long MicroSeqNum = 0;
         #endregion
 
         #region Public Properties
 
+        public bool PeakValleyByMicro { get; set; } = false;
         public int TimeFrameMinutes { get; init; }
         public bool IsCapacityEnabled { get; set; } = false;
         public int CandleCapacity { get; set; } = 48;
         public int MicroCapacity { get => CandleCapacity * TimeFrameMinutes; }
         public long ProcessLimit { get; set; } = 0;
-        public Dictionary<long, PriceActionElement> Elements { get; private set; }
-        public Dictionary<long, PriceActionElement> ChainedElements { get; private set; }
+        public Dictionary<long, PriceActionElement> PeaksAndValleys { get; private set; }
+        public Dictionary<long, PriceActionElement> ChainedPeaksAndValleys { get; private set; }
         public Dictionary<long, PriceActionLeg> Legs { get; private set; }
         public Dictionary<long, PriceActionSwing> Swings { get; private set; }
         public List<Candle> MicroCandles { get; private set; }
@@ -38,24 +39,25 @@ namespace TradeCore.PriceAction
         public PriceActionContainer(int timeFrameMinutes)
         {
             TimeFrameMinutes= timeFrameMinutes;
-            MicroCandles = new List<Candle>();
-            Candles = new List<Candle>();
-            ValleyCandles = new List<Candle>();
-            PeakCandles = new List<Candle>();
-            Elements = new Dictionary<long, PriceActionElement>();
-            ChainedElements = new Dictionary<long, PriceActionElement>();
-            Legs = new Dictionary<long, PriceActionLeg>();
-            Swings = new Dictionary<long, PriceActionSwing>();
+            MicroCandles = new();
+            Candles = new();
+            ValleyCandles = new();
+            PeakCandles = new();
+            PeaksAndValleys = new();
+            ChainedPeaksAndValleys = new();
+            Legs = new();
+            Swings = new();
+            List<int> lst = new();
         }
 
         #endregion
 
         #region Events
-        public event EventHandler<Candle>? MicroCandleChanged;
+        public event EventHandler<Candle>? MicroCandleAdded;
+        public event EventHandler<Candle>? CandleAdded;
         #endregion
 
         #region Public Methods
-
         public void AddCandle(Candle candle, bool autoSeqNum = true)
         {
             if (candle is null)
@@ -63,59 +65,22 @@ namespace TradeCore.PriceAction
 
             if (ProcessLimit == 0)
             {
-                if (autoSeqNum)
-                    candle.SeqNum = _candleSeq++;
-                Candles.Add(candle);
-                if (IsCapacityEnabled && Candles.Count >= CandleCapacity)
-                    Candles.RemoveAt(Candles.Count - CandleCapacity);
-                ProcessPeaksAndValleys();
-                ProcessChainedElements();
-                ProcessLegs();
-                ProcessSwings();
+                StartAddCandleProcess(candle, autoSeqNum);
             }
-            else
+            else if (CandleSeqNum < ProcessLimit)
             {
-                if (_candleSeq < ProcessLimit)
-                {
-                    if (autoSeqNum)
-                        candle.SeqNum = _candleSeq++;
-                    Candles.Add(candle);
-                    if (IsCapacityEnabled && Candles.Count >= CandleCapacity)
-                        Candles.RemoveAt(Candles.Count - CandleCapacity);
-                    ProcessPeaksAndValleys();
-                    ProcessChainedElements();
-                    ProcessLegs();
-                    ProcessSwings();
-                }
+                StartAddCandleProcess(candle, autoSeqNum);
             }
         }
         public void AddMicroCandle(Candle candle, bool autoSeqNum = true)
         {
             if (autoSeqNum)
-                candle.SeqNum = _microSeq++;
+                candle.SeqNum = MicroSeqNum++;
             MicroCandles.Add(candle);
             if (IsCapacityEnabled && MicroCandles.Count >= MicroCapacity)
                 MicroCandles.RemoveAt(MicroCandles.Count - MicroCapacity);
 
-            MicroCandleChanged?.Invoke(this, candle);
-        }
-        public static PriceActionContainer GenerateContainer(List<Candle> candles, List<Candle> microCandle)
-        {
-            if (candles is null)
-                throw new ArgumentNullException(nameof(candles));
-            if (microCandle is null)
-                throw new ArgumentNullException(nameof(microCandle));
-
-            var container = new PriceActionContainer(15);
-            var selectedMicro =
-                microCandle.Where(c => c.SeqNum >= candles.FirstOrDefault()!.SeqNum * container.TimeFrameMinutes).ToList();
-
-            foreach (var item in selectedMicro)
-                container.AddMicroCandle(item, false); // populate micro first.
-            foreach (var item in candles)
-                container.AddCandle(item, false); // false means: use old SeqNum
-
-            return container;
+            MicroCandleAdded?.Invoke(this, candle);
         }
         public decimal GetSlope(long startSeqNum, long endSeqNum, MomentumType momentum)
         {
@@ -141,10 +106,22 @@ namespace TradeCore.PriceAction
         }
         public decimal GetAbsoluteSlope(long startSeqNum, long endSeqNum, MomentumType momentum)
             => Math.Abs(GetSlope(startSeqNum, endSeqNum, momentum));
-
         #endregion
 
         #region Private Methods
+        private void StartAddCandleProcess(Candle candle, bool autoSeqNum)
+        {
+            if (autoSeqNum)
+                candle.SeqNum = CandleSeqNum++;
+            Candles.Add(candle);
+            CandleAdded?.Invoke(this, candle);
+            if (IsCapacityEnabled && Candles.Count >= CandleCapacity)
+                Candles.RemoveAt(Candles.Count - CandleCapacity);
+            ProcessPeaksAndValleys();
+            ProcessPeaksAndValleysChain();
+            ProcessLegs();
+            ProcessSwings();
+        }
         private bool IsMinimaFirst(Candle target)
         {
             if (target is null) throw new ArgumentNullException(nameof(target));
@@ -152,208 +129,157 @@ namespace TradeCore.PriceAction
             if (target.SeqNum == 0) 
                 return true;
             else
+                return PeakValleyByMicro ? IsMinimaFirstBasedOnMicro(target) : IsBullishCandle(target);
+        }
+        private bool IsMinimaFirstBasedOnMicro(Candle target)
+        {
+            var query = MicroCandles.Where(x =>
+            x.SeqNum >= target.SeqNum * TimeFrameMinutes - TimeFrameMinutes &&
+            x.SeqNum <= target.SeqNum * TimeFrameMinutes);
+            var high = query.Where(x => x.HighPrice == query.Max(x => x.HighPrice)).FirstOrDefault();
+            var low = query.Where(x => x.LowPrice == query.Min(x => x.LowPrice)).FirstOrDefault();
+            if (high != null && low != null)
+                return low.SeqNum <= high.SeqNum;
+            else
+                return false;
+        }
+        private void AddMinima(int index, Candle candle)
+        {
+            PeaksAndValleys.Add(index, new PriceActionElement(candle)
             {
-                var query = MicroCandles.Where(x =>
-                x.SeqNum >= target.SeqNum * TimeFrameMinutes - TimeFrameMinutes &&
-                x.SeqNum <= target.SeqNum * TimeFrameMinutes);
-
-                var high = query.Where(x => x.HighPrice == query.Max(x => x.HighPrice)).FirstOrDefault();
-                var low = query.Where(x => x.LowPrice == query.Min(x => x.LowPrice)).FirstOrDefault();
-                if (high != null && low != null)
-                    return low.SeqNum <= high.SeqNum;
-                else
-                    return false;
-            }
+                PeakValleyType = PeakValleyType.Valley
+            });
+            ValleyCandles.Add(candle);
+        }
+        private void AddMaxima(int index, Candle candle)
+        {
+            PeaksAndValleys.Add(index, new PriceActionElement(candle)
+            {
+                PeakValleyType = PeakValleyType.Peak
+            });
+            PeakCandles.Add(candle);
         }
         private void ProcessPeaksAndValleys()
         {
-            ValleyCandles.Clear();
-            PeakCandles.Clear();
-            Elements.Clear();
-
-            var _indexCounter = 0;
-
             if (Candles.Count < 3) return;
 
-            //------------------If candle is bullish then add minima first------------------
-            if (Candles[0].OpenPrice < Candles[0].ClosePrice)
+            var index = 0;
+            ValleyCandles.Clear();
+            PeakCandles.Clear();
+            PeaksAndValleys.Clear();
+
+            // First Element check
+            if (IsMinimaFirst(Candles[0]))
             {
                 if (Candles[0].LowPrice < Candles[1].LowPrice)
-                {
-                    PriceActionElement _min = new PriceActionElement(Candles[0])
-                    {
-                        PeakValleyType = PeakValleyType.Valley
-                    };
-                    Elements.Add(_indexCounter++, _min);
+                    AddMinima(index++, Candles[0]);
 
-                    ValleyCandles.Add(Candles[0]);
-                }
                 if (Candles[0].HighPrice > Candles[1].HighPrice)
-                {
-                    PriceActionElement _max = new PriceActionElement(Candles[0])
-                    {
-                        PeakValleyType = PeakValleyType.Peak
-                    };
-                    Elements.Add(_indexCounter++, _max);
-
-                    PeakCandles.Add(Candles[0]);
-                }
+                    AddMaxima(index++, Candles[0]);
             }
             else
             {
                 if (Candles[0].HighPrice > Candles[1].HighPrice)
-                {
-                    PriceActionElement _max = new PriceActionElement(Candles[0])
-                    {
-                        PeakValleyType = PeakValleyType.Peak
-                    };
-                    Elements.Add(_indexCounter++, _max);
+                    AddMaxima(index++, Candles[0]);
 
-                    PeakCandles.Add(Candles[0]);
-                }
                 if (Candles[0].LowPrice < Candles[1].LowPrice)
-                {
-                    PriceActionElement min = new PriceActionElement(Candles[0])
-                    {
-                        PeakValleyType = PeakValleyType.Valley
-                    };
-                    Elements.Add(_indexCounter++, min);
-
-                    ValleyCandles.Add(Candles[0]);
-                }
+                    AddMinima(index++, Candles[0]);
             }
 
-            //------------------Iterate over other Candles to find minima and maxima------------------
+            //Middle elements Loop
             for (int i = 1; i < Candles.Count - 1; i++)
             {
-                if (Candles[i - 1].LowPrice >= Candles[i].LowPrice && Candles[i].LowPrice <= Candles[i + 1].LowPrice)
+                if (IsMinimaFirst(Candles[i]))
                 {
-                    PriceActionElement min = new PriceActionElement(Candles[i])
-                    {
-                        PeakValleyType = PeakValleyType.Valley
-                    };
-                    Elements.Add(_indexCounter++, min);
+                    if (Candles[i - 1].LowPrice >= Candles[i].LowPrice && Candles[i].LowPrice <= Candles[i + 1].LowPrice)
+                        AddMinima(index++, Candles[i]);
 
-                    ValleyCandles.Add(Candles[i]);
+                    if (Candles[i - 1].HighPrice <= Candles[i].HighPrice && Candles[i].HighPrice >= Candles[i + 1].HighPrice)
+                        AddMaxima(index++, Candles[i]);
                 }
-                if (Candles[i - 1].HighPrice <= Candles[i].HighPrice && Candles[i].HighPrice >= Candles[i + 1].HighPrice)
+                else
                 {
-                    PriceActionElement _max = new PriceActionElement(Candles[i])
-                    {
-                        PeakValleyType = PeakValleyType.Peak
-                    };
-                    Elements.Add(_indexCounter++, _max);
-
-                    PeakCandles.Add(Candles[i]);
+                    if (Candles[i - 1].HighPrice <= Candles[i].HighPrice && Candles[i].HighPrice >= Candles[i + 1].HighPrice)
+                        AddMaxima(index++, Candles[i]);
+                    if (Candles[i - 1].LowPrice >= Candles[i].LowPrice && Candles[i].LowPrice <= Candles[i + 1].LowPrice)
+                        AddMinima(index++, Candles[i]);
                 }
             }
-            //------------------If last candle is bullish then add minima last------------------
-            if (Candles[Candles.Count - 1].OpenPrice < Candles[Candles.Count - 1].ClosePrice)
+
+            //End Candles Check
+            if (IsMinimaFirst(Candles[^1]))
             {
-                if (Candles[Candles.Count - 1].LowPrice < Candles[Candles.Count - 2].LowPrice)
-                {
-                    PriceActionElement min = new PriceActionElement(Candles[Candles.Count - 1])
-                    {
-                        PeakValleyType = PeakValleyType.Valley
-                    };
-                    Elements.Add(_indexCounter++, min);
+                if (Candles[^1].LowPrice < Candles[^2].LowPrice)
+                    AddMinima(index++, Candles[^1]);
 
-                    ValleyCandles.Add(Candles[Candles.Count - 1]);
-                }
-                if (Candles[Candles.Count - 1].HighPrice > Candles[Candles.Count - 2].HighPrice)
-                {
-                    PriceActionElement _max = new PriceActionElement(Candles[Candles.Count - 1])
-                    {
-                        PeakValleyType = PeakValleyType.Peak
-                    };
-                    Elements.Add(_indexCounter++, _max);
-
-                    PeakCandles.Add(Candles[Candles.Count - 1]);
-                }
+                if (Candles[^1].HighPrice > Candles[^2].HighPrice)
+                    AddMaxima(index++, Candles[^1]);
             }
-            else if (Candles[Candles.Count - 1].OpenPrice > Candles[Candles.Count - 1].ClosePrice)
+            else if (Candles[^1].OpenPrice > Candles[^1].ClosePrice)
             {
-                if (Candles[Candles.Count - 1].HighPrice > Candles[Candles.Count - 2].HighPrice)
-                {
-                    PriceActionElement _max = new PriceActionElement(Candles[Candles.Count - 1])
-                    {
-                        PeakValleyType = PeakValleyType.Peak
-                    };
-                    Elements.Add(_indexCounter++, _max);
+                if (Candles[^1].HighPrice > Candles[^2].HighPrice)
+                    AddMaxima(index++, Candles[^1]);
 
-                    PeakCandles.Add(Candles[Candles.Count - 1]);
-                }
-                if (Candles[Candles.Count - 1].LowPrice < Candles[Candles.Count - 2].LowPrice)
-                {
-                    PriceActionElement min = new PriceActionElement(Candles[Candles.Count - 1])
-                    {
-                        PeakValleyType = PeakValleyType.Valley
-                    };
-                    Elements.Add(_indexCounter++, min);
-
-                    ValleyCandles.Add(Candles[Candles.Count - 1]);
-                }
+                if (Candles[^1].LowPrice < Candles[^2].LowPrice)
+                    AddMinima(index++, Candles[^1]);
             }
         }
-        private void ProcessChainedElements()
+        private void ProcessPeaksAndValleysChain()
         {
-            if (Elements == null)
-                throw new NullReferenceException("SwingElements cannot be null.");
-
-            if (Elements.Count == 0) return;
+            if (PeaksAndValleys.Count == 0) return;
 
             long _chainIndex = 0;
-            ChainedElements.Clear();
+            ChainedPeaksAndValleys.Clear();
 
-            ChainedElements.Add(_chainIndex++, Elements[0]);
+            ChainedPeaksAndValleys.Add(_chainIndex++, PeaksAndValleys[0]);
 
-            if (Elements.Count > 1)
+            if (PeaksAndValleys.Count > 1)
             {
-                for (int i = 1; i < Elements.Count; i++)
+                for (int i = 1; i < PeaksAndValleys.Count; i++)
                 {
-                    if (Elements[i].PeakValleyType == PeakValleyType.Valley
-                        && Elements[i - 1].PeakValleyType == PeakValleyType.Valley)
+                    if (PeaksAndValleys[i].PeakValleyType == PeakValleyType.Valley
+                        && PeaksAndValleys[i - 1].PeakValleyType == PeakValleyType.Valley)
                     {
                         //----------------------If current element's LowPrice is lower than----------------
                         //----------------------previous element's LowPrice--------------------------------
-                        if (Elements[i].Candle!.LowPrice < Elements[i - 1].Candle!.LowPrice)
+                        if (PeaksAndValleys[i].Candle!.LowPrice < PeaksAndValleys[i - 1].Candle!.LowPrice)
                         {
-                            ChainedElements.Remove(_chainIndex - 1);
-                            ChainedElements.Add(_chainIndex - 1, Elements[i]);
+                            ChainedPeaksAndValleys.Remove(_chainIndex - 1);
+                            ChainedPeaksAndValleys.Add(_chainIndex - 1, PeaksAndValleys[i]);
                         }
                     }
-                    else if (Elements[i].PeakValleyType == PeakValleyType.Peak
-                        && Elements[i - 1].PeakValleyType == PeakValleyType.Peak)
+                    else if (PeaksAndValleys[i].PeakValleyType == PeakValleyType.Peak
+                        && PeaksAndValleys[i - 1].PeakValleyType == PeakValleyType.Peak)
                     {
                         //----------------------If current element's HighPrice is higher than----------------
                         //----------------------previous element's HighPrice: We ----------------------------------
-                        if (Elements[i].Candle!.HighPrice > Elements[i - 1].Candle!.HighPrice)
+                        if (PeaksAndValleys[i].Candle!.HighPrice > PeaksAndValleys[i - 1].Candle!.HighPrice)
                         {
-                            ChainedElements.Remove(_chainIndex - 1);
-                            ChainedElements.Add(_chainIndex - 1, Elements[i]);
+                            ChainedPeaksAndValleys.Remove(_chainIndex - 1);
+                            ChainedPeaksAndValleys.Add(_chainIndex - 1, PeaksAndValleys[i]);
                         }
                     }
                     else
                     {
                         //------------------Simply add the element to the ChainedElements-------------
-                        ChainedElements.Add(_chainIndex++, Elements[i]);
+                        ChainedPeaksAndValleys.Add(_chainIndex++, PeaksAndValleys[i]);
                     }
                 }
             }
         }
         private void ProcessLegs()
         {
-            if (ChainedElements == null)
-                throw new NullReferenceException("ChainedSwingElements cannot be null.");
-
+            long LegIndex = 0;
             Legs.Clear();
 
-            long _legIndex = 0;
-            if (ChainedElements.Count >= 2)
+            if (ChainedPeaksAndValleys.Count >= 2)
             {
-                for (int i = 1; i < ChainedElements.Count; i++)
+                for (int i = 1; i < ChainedPeaksAndValleys.Count; i++)
                 {
-                    Legs.Add(_legIndex++, new PriceActionLeg(ChainedElements[i - 1], ChainedElements[i]));
+                    var beginElement = ChainedPeaksAndValleys[i - 1];
+                    var endElement = ChainedPeaksAndValleys[i];
+                    var candles = Candles.Where(c => c.SeqNum >= beginElement.Candle.SeqNum && c.SeqNum <= endElement.Candle.SeqNum);
+                    Legs.Add(LegIndex++, new PriceActionLeg(beginElement, endElement, Candles.ToList()));
                 }
             }
         }
@@ -366,10 +292,19 @@ namespace TradeCore.PriceAction
             if (Legs.Count < 2) return;
             for (int i = 1; i < Legs.Count - 1; i++)
             {
-                Swings.Add(_swingIndex++, new PriceActionSwing(Legs[i - 1], Legs[i], Legs[i + 1]));
+                var leg1 = Legs[i - 1];
+                var leg2 = Legs[i];
+                var leg3 = Legs[i + 1];
+                var candles = Candles.Where(c => c.SeqNum >= leg1.BeginElement.Candle.SeqNum && c.SeqNum <= leg3.EndElement.Candle.SeqNum);
+                Swings.Add(_swingIndex++, new PriceActionSwing(leg1, leg2, leg3, candles.ToList()));
             }
         }
-        private decimal BaseOneTruncate(decimal price)
+        #endregion
+
+        #region Static Methods
+        private static bool IsBullishCandle(Candle target)
+            => (target.ClosePrice > target.OpenPrice);
+        private static decimal BaseOneTruncate(decimal price)
         {
             if (price != 0 && price >= 1)
                 while (Math.Truncate(price / 10) > 0) price /= 10;
@@ -377,7 +312,25 @@ namespace TradeCore.PriceAction
                 while ((price * 10) < 10) price *= 10;
             return price;
         }
+        public static PriceActionContainer? GenerateContainer(int timeframe, List<Candle> candles, List<Candle> microCandle)
+        {
+            if (candles is null)
+                throw new ArgumentNullException(nameof(candles));
+            if (microCandle is null)
+                throw new ArgumentNullException(nameof(microCandle));
+            if (candles.Count < 1) return null;
+
+            var container = new PriceActionContainer(timeframe);
+            var selectedMicro =
+                microCandle.Where(c => c.SeqNum >= candles[0].SeqNum * container.TimeFrameMinutes).ToList();
+
+            foreach (var item in selectedMicro)
+                container.AddMicroCandle(item, false); // populate micro first.
+            foreach (var item in candles)
+                container.AddCandle(item, false); // false means: use old SeqNum
+
+            return container;
+        }
         #endregion
     }
 }
-

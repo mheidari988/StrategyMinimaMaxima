@@ -36,6 +36,7 @@ namespace TradeCore.PriceAction
             MicroCandleSeries = microCandleSeries;
 
             ParentContainer.IsCapacityEnabled = true;
+            ParentContainer.CandleCapacity = 36;
             ChildContainer.IsCapacityEnabled = true;
             ChildContainer.CandleCapacity = ParentContainer.CandleCapacity * Hierarchy;
 
@@ -61,11 +62,19 @@ namespace TradeCore.PriceAction
             Connector.SubscribeCandles(MicroCandleSeries);
             Connector.SubscribeCandles(ChildCandleSeries);
             Connector.SubscribeCandles(ParentCandleSeries);
+            processor.ParentChanged += Processor_ParentChanged;
 
             Connector.CandleSeriesProcessing += Connector_CandleSeriesProcessing;
 
             base.OnStarted();
         }
+
+        private void Processor_ParentChanged(object? sender, Signal.ContainerChangeEventArgs e)
+        {
+            this.AddInfoLog($"Parent Swings Count: {e.ParentContainer.Swings.Count}");
+            this.AddInfoLog($"Child Swings Count: {e.ChildContainer.Swings.Count}");
+        }
+
         private void Connector_CandleSeriesProcessing(CandleSeries candleSeries, Candle candle)
         {
             //----------------------------------------------------------------------------
@@ -76,7 +85,6 @@ namespace TradeCore.PriceAction
                 if (candle.State == CandleStates.Finished)
                 {
                     ChildContainer.AddMicroCandle(candle);
-                    this.AddInfoLog($"MicroCandle: {candle.OpenTime} Added");
                 }
             }
             //-------------------------------------------------------------------------
@@ -87,7 +95,6 @@ namespace TradeCore.PriceAction
                 if (candle.State == CandleStates.Finished)
                 {
                     ChildContainer.AddCandle(candle);
-                    this.AddInfoLog($"ChildCandle: {candle.Arg} Added");
                     Processor.ChildContainer = ChildContainer;
                 }
             }
@@ -99,7 +106,6 @@ namespace TradeCore.PriceAction
                 if (candle.State == CandleStates.Finished)
                 {
                     ParentContainer.AddCandle(candle);
-                    this.AddInfoLog($"ParentCandle: {candle.Arg} Added");
                     Processor.ParentContainer = ParentContainer;
                 }
             }

@@ -10,14 +10,14 @@ namespace TradeCore.PriceAction
 {
     public class PriceActionProcessor
     {
-        private PriceActionContainer? parentContainer;
-        private PriceActionContainer? childContainer;
+        private PriceActionContainer parentContainer;
+        private PriceActionContainer childContainer;
         
         private decimal lastImpulseSlope;
 
         #region Events
-        public event EventHandler<PriceActionContainer>? ParentChanged;
-        public event EventHandler<PriceActionContainer>? ChildChanged;
+        public event EventHandler<ContainerChangeEventArgs>? ParentChanged;
+        public event EventHandler<ContainerChangeEventArgs>? ChildChanged;
         public event EventHandler<ParentSignalEventArgs>? ParentSignalChanged;
         public event EventHandler<ParentSignalEventArgs>? BullishICI;
         public event EventHandler<ParentSignalEventArgs>? BearishICI;
@@ -32,9 +32,9 @@ namespace TradeCore.PriceAction
                                     PriceActionContainer child,
                                     int hierarchy = 4)
         {
-            ParentContainer = parent ?? throw new ArgumentNullException(nameof(parent));
-            ChildContainer = child ?? throw new ArgumentNullException(nameof(child));
-            ChildContainer.MicroCandleChanged += ChildContainer_MicroCandleChanged;
+            parentContainer = parent ?? throw new ArgumentNullException(nameof(parent));
+            childContainer = child ?? throw new ArgumentNullException(nameof(child));
+            ChildContainer.MicroCandleAdded += ChildContainer_MicroCandleChanged;
             Hierarchy = hierarchy;
         }
 
@@ -43,7 +43,7 @@ namespace TradeCore.PriceAction
         #region Properties
 
         public decimal LastImpulseSlope { get => lastImpulseSlope; private set => lastImpulseSlope = Math.Round(value, 5); }
-        public PriceActionContainer? ParentContainer
+        public PriceActionContainer ParentContainer
         {
             get => parentContainer;
             set
@@ -52,7 +52,7 @@ namespace TradeCore.PriceAction
                 WhenParentChanged();
             }
         }
-        public PriceActionContainer? ChildContainer
+        public PriceActionContainer ChildContainer
         {
             get => childContainer;
             set
@@ -255,7 +255,7 @@ namespace TradeCore.PriceAction
 
         private void WhenParentChanged()
         {
-            if (parentContainer is not null)
+            if (parentContainer is not null && childContainer is not null)
             {
                 if (parentContainer.Swings.Count >= 4)
                 {
@@ -454,7 +454,7 @@ namespace TradeCore.PriceAction
                         || GetParentSwing(3)!.PatternType == PatternType.BearishCII)
                         && GetParentSwing(2)!.PatternType == PatternType.BearishCIC
                         && GetParentSwing(1)!.PatternType == PatternType.BearishICC
-                        && GetParentSwing()!.PatternType==PatternType.BullishICC
+                        && GetParentSwing()!.PatternType == PatternType.BullishICC
                         && PriceActionSwing.GetImpulseType(GetParentSwing(3)!) == ImpulseType.Breakout
                         && PriceActionSwing.GetCorrectionType(GetParentSwing(2)!) != CorrectionType.Brokeback)
                     {
@@ -498,7 +498,7 @@ namespace TradeCore.PriceAction
                         });
                     }
                 }
-                ParentChanged?.Invoke(this, parentContainer);
+                ParentChanged?.Invoke(this, new ContainerChangeEventArgs(parentContainer, childContainer));
             }
         }
         private void WhenChildChanged()
@@ -671,7 +671,7 @@ namespace TradeCore.PriceAction
                     BullishICISignal?.Invoke(this, signal);
                 }
             }
-            ChildChanged?.Invoke(this, childContainer!);
+            ChildChanged?.Invoke(this, new ContainerChangeEventArgs(childContainer!, parentContainer!));
         }
         private void ChildContainer_MicroCandleChanged(object? sender, Candle e)
         {
@@ -800,17 +800,25 @@ namespace TradeCore.PriceAction
             else
                 return null;
         }
-        private List<PriceActionSwing>? GenerateChildList(bool nonStop, long cStartSeq, long cEndSeq)
+        private List<PriceActionSwing>? GenerateChildList(bool ReadToEnd, long StartSeq, long EndSeq)
         {
-            if (!nonStop)
+            if (ReadToEnd)
             {
-                var childCandles = ChildContainer!.Candles.Where(c => c.SeqNum >= cStartSeq && c.SeqNum <= cEndSeq).ToList();
-                return PriceActionContainer.GenerateContainer(childCandles, childContainer!.MicroCandles).Swings.Values.ToList();
+                var childCandles = ChildContainer!.Candles.Where(c => c.SeqNum >= StartSeq).ToList();
+                var result = PriceActionContainer.GenerateContainer(ChildContainer.TimeFrameMinutes, childCandles, childContainer!.MicroCandles);
+                if (result is not null)
+                    return result.Swings.Values.ToList();
+                else
+                    return null;
             }
             else
             {
-                var childCandles = ChildContainer!.Candles.Where(c => c.SeqNum >= cStartSeq).ToList();
-                return PriceActionContainer.GenerateContainer(childCandles, childContainer!.MicroCandles).Swings.Values.ToList();
+                var childCandles = ChildContainer!.Candles.Where(c => c.SeqNum >= StartSeq && c.SeqNum <= EndSeq).ToList();
+                var result = PriceActionContainer.GenerateContainer(ChildContainer.TimeFrameMinutes, childCandles, childContainer.MicroCandles);
+                if (result is not null)
+                    return result.Swings.Values.ToList();
+                else
+                    return null;
             }
         }
         private bool ValidateTwoCloseBreak(PriceActionSwing swing)
