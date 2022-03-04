@@ -16,8 +16,8 @@ namespace TradeCore.PriceAction
 {
     public class ICIStrategy : Strategy
     {
-        private readonly PriceActionContainer ParentContainer = new PriceActionContainer(60);
-        private readonly PriceActionContainer ChildContainer = new PriceActionContainer(15);
+        private readonly PriceActionContainer ParentContainer = new(60);
+        private readonly PriceActionContainer ChildContainer = new(15);
         private PriceActionProcessor processor;
 
         public int Hierarchy { get; set; } = 4;
@@ -35,10 +35,13 @@ namespace TradeCore.PriceAction
             ChildCandleSeries = childCandleSeries;
             MicroCandleSeries = microCandleSeries;
 
-            ParentContainer.IsCapacityEnabled = true;
-            ParentContainer.CandleCapacity = 36;
-            ChildContainer.IsCapacityEnabled = true;
+            ParentContainer.IsLimitedCapacity = true;
+            ParentContainer.CandleCapacity = 48;
+            ChildContainer.IsLimitedCapacity = true;
             ChildContainer.CandleCapacity = ParentContainer.CandleCapacity * Hierarchy;
+
+            ParentContainer.IsProcessByMicro = false;
+            ChildContainer.IsProcessByMicro = false;
 
             ParentContainer.ProcessLimit = processLimit;
             ChildContainer.ProcessLimit = processLimit * Hierarchy;
@@ -80,11 +83,12 @@ namespace TradeCore.PriceAction
             //----------------------------------------------------------------------------
             //--- Pass micro candles to processor to evaluate positions on lower times ---
             //----------------------------------------------------------------------------
-            if (((TimeFrameCandle)candle).TimeFrame == TimeSpan.FromMinutes(1))
+            if (((TimeFrameCandle)candle).TimeFrame == TimeSpan.FromMinutes(3))
             {
                 if (candle.State == CandleStates.Finished)
                 {
                     ChildContainer.AddMicroCandle(candle);
+                    ParentContainer.AddMicroCandle(candle);
                 }
             }
             //-------------------------------------------------------------------------

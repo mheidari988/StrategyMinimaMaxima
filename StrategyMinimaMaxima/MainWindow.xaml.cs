@@ -52,8 +52,8 @@ namespace TradeCore
             MainLogManager = new LogManager();
             MainLogManager.Listeners.Add(new FileLogListener("log.txt"));
             MainLogManager.Listeners.Add(new GuiLogListener(Monitor));
-            DatePickerBegin.SelectedDate = new DateTime(2021, 1, 1);
-            DatePickerEnd.SelectedDate = new DateTime(2021, 1, 2);
+            DatePickerBegin.SelectedDate = new DateTime(2021, 2, 5);
+            DatePickerEnd.SelectedDate = new DateTime(2021, 2, 6);
 
             CandleSettingsEditor.Settings = new CandleSeries
             {
@@ -97,7 +97,7 @@ namespace TradeCore
             //.................add connector to the log manager...................
             MainLogManager.Sources.Add(_connector);
 
-            microCandleSeries = new CandleSeries(typeof(TimeFrameCandle), _security, TimeSpan.FromMinutes(1))
+            microCandleSeries = new CandleSeries(typeof(TimeFrameCandle), _security, TimeSpan.FromMinutes(3))
             {
                 BuildCandlesMode = MarketDataBuildModes.Load
             };
@@ -267,6 +267,11 @@ namespace TradeCore
             string report = ((ICIStrategy)iciStrategy).GetParentReport();
             txtPriceActionReport.Text = report != string.Empty ? report : "[NO DATA AVAILABLE]";
         }
+        private void btnGetChildSwings_Click(object sender, RoutedEventArgs e)
+        {
+            string report = LogHelper.ReportSwingList(iciStrategy.Processor.ChildContainer.Swings.Values.ToList());
+            txtPriceActionReport.Text = report != string.Empty ? report : "[NO DATA AVAILABLE]";
+        }
 
         private void btnGetLeg2ChildsCont_Click(object sender, RoutedEventArgs e)
         {
@@ -290,5 +295,13 @@ namespace TradeCore
                     $"Result:{item?.GetRRResult()}\n\n";
             }
         }
+
+        private void btnTemp_Click(object sender, RoutedEventArgs e)
+        {
+            Title = iciStrategy.Processor.ParentContainer
+                .ChainedPeaksAndValleys.Values.Count(c => c.PeakValleyType == PeakValleyType.Peak).ToString();
+        }
+
+
     }
 }

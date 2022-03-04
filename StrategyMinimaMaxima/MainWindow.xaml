@@ -62,23 +62,24 @@
                     <TabItem Header="Swing Data">
                         <Grid Background="#FFE5E5E5">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="auto"/>
+                                <ColumnDefinition Width="auto" MinWidth="591"/>
                                 <ColumnDefinition Width="auto"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="40"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
-                            <TextBox Name="txtParentLevel" Text="0" HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Center" Width="52" Height="26" Margin="95,0,0,0"/>
-                            <Button Name="btnGetLeg1Childs" Content="Leg1" Click="btnGetLeg1Childs_Click" HorizontalAlignment="Left" Margin="159,0,0,0" VerticalAlignment="Center" Width="50" Height="40"/>
-                            <Button Name="btnGetLeg2Childs" Content="Leg2" Click="btnGetLeg2Childs_Click" HorizontalAlignment="Left" Margin="233,0,0,0" VerticalAlignment="Center" Width="50" Height="40"/>
-                            <Button Name="btnGetLeg2ChildsCont" Content="Leg2~" Click="btnGetLeg2ChildsCont_Click" VerticalAlignment="Center" Height="40" Margin="286,0,0,0" HorizontalAlignment="Left" Width="56"/>
-                            <Button Name="btnGetLeg3Childs" Content="Leg3" Click="btnGetLeg3Childs_Click" HorizontalAlignment="Left" Margin="359,0,0,0" VerticalAlignment="Center" Width="50" Height="40"/>
-                            <Button Name="btnGetLeg3ChildsCont" Content="Leg3~" Click="btnGetLeg3ChildsCont_Click" HorizontalAlignment="Left" Margin="412,0,0,0" VerticalAlignment="Center" Width="55" Height="40"/>
-                            <Label Content="Parrent Level" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Center" Width="80" Height="26"/>
-                            <TextBox FontSize="14" Name="txtPriceActionReport" TextWrapping="Wrap" Text="" Margin="0,44,0,0" Grid.RowSpan="2"
-                             ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
-                            <Button Name="btnGetParrentSwings" Click="btnGetParentSwings_Click" Content="Get Parrent Swings" HorizontalAlignment="Left" Margin="493,0,0,0" VerticalAlignment="Center" Width="98" Height="40"/>
+                            <TextBox Name="txtParentLevel" Text="0" HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Center" Width="22" Height="26" Margin="95,0,0,0"/>
+                            <Button Name="btnGetLeg1Childs" Content="Leg1" Click="btnGetLeg1Childs_Click" HorizontalAlignment="Left" Margin="199,0,0,0" VerticalAlignment="Center" Width="50" Height="40"/>
+                            <Button Name="btnGetLeg2Childs" Content="Leg2" Click="btnGetLeg2Childs_Click" HorizontalAlignment="Left" Margin="254,0,0,0" VerticalAlignment="Center" Width="50" Height="40"/>
+                            <Button Name="btnGetLeg2ChildsCont" Content="Leg2~" Click="btnGetLeg2ChildsCont_Click" VerticalAlignment="Center" Height="40" Margin="307,0,0,0" HorizontalAlignment="Left" Width="56"/>
+                            <Button Name="btnGetLeg3Childs" Content="Leg3" Click="btnGetLeg3Childs_Click" HorizontalAlignment="Left" Margin="380,0,0,0" VerticalAlignment="Center" Width="50" Height="40"/>
+                            <Button Name="btnGetLeg3ChildsCont" Content="Leg3~" Click="btnGetLeg3ChildsCont_Click" HorizontalAlignment="Left" Margin="433,0,0,0" VerticalAlignment="Center" Width="55" Height="40"/>
+                            <Label Content="Parent Level" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Center" Width="80" Height="26"/>
+                            <TextBox FontSize="14" Name="txtPriceActionReport" TextWrapping="Wrap" Text="" Margin="0,4,0,0"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto" Grid.Row="1"/>
+                            <Button Name="btnGetParrentSwings" Click="btnGetParentSwings_Click" Content="Get Parent Swings" HorizontalAlignment="Left" Margin="493,0,0,0" VerticalAlignment="Center" Width="98" Height="40"/>
+                            <Button x:Name="btnGetChildSwings" Content="All C" Click="btnGetChildSwings_Click" HorizontalAlignment="Left" Margin="134,0,0,0" VerticalAlignment="Center" Width="50" Height="40"/>
                         </Grid>
                     </TabItem>
                     <TabItem Header="Event Controller">
@@ -153,6 +154,7 @@
         <DatePicker x:Name="DatePickerEnd" Grid.Row="0" Grid.Column="2"/>
         <TextBox Grid.Column="3" Name="txtProcessLimit" Text="-1" TextAlignment="Center" />
         <Button Name="btnOpenMainWin" Grid.Column="5" Content="Open Main" Click="btnOpenMainClicked"/>
+        <Button Click="btnTemp_Click" x:Name="btnTemp" Grid.Column="6" Content="Button" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Center" Height="30" Width="96"/>
 
 
     </Grid>
